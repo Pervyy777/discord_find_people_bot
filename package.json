@@ -1,0 +1,31 @@
+{
+  "name": "discord_find_people_bot",
+  "version": "0.0.1",
+  "description": "discord bot for search peoples",
+  "main": "index.js",
+  "scripts": {
+    "app": "node index.js",
+    "dev": "nodemon index.js",
+    "deploy": "node deploy-commands.js",
+    "redis_deploy": "node deploy-redis.js"
+  },
+  "keywords": [],
+  "author": "Me",
+  "license": "ISC",
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.50",
+    "axios": "^1.7.1",
+    "canvas": "^2.11.2",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.3.1",
+    "fs": "^0.0.1-security",
+    "ioredis": "^5.4.1",
+    "mongoose": "^8.0.4",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
+    "undici": "^6.7.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
