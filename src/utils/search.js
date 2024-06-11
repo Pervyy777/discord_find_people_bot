@@ -39,11 +39,23 @@ module.exports = async (interaction) => {
         }
 
         if (!profile || !profile.user) {
-            const noProfileFoundMessage = 'Не удалось найти подходящего пользователя.';
-            if (interaction.replied || interaction.deferred) {
-                await interaction.editReply(noProfileFoundMessage);
+            const embedReply = new EmbedBuilder()
+                .setColor(0x000000)
+                .setDescription("Не удалось найти подходящего пользователя.");
+
+            const options = {
+                embeds: [embedReply],
+                components: [],
+                files: []
+            };
+
+            if(interaction.message){
+                await interaction.message.edit(options);
+            }
+            else if (interaction.replied || interaction.deferred) {
+                await interaction.editReply(options);
             } else {
-                await interaction.reply(noProfileFoundMessage);
+                await interaction.reply(options);
             }
             return;
         }
@@ -84,10 +96,13 @@ module.exports = async (interaction) => {
             fetch: true
         };
 
-        if (interaction.replied || interaction.deferred) {
-            await interaction.editReply(options);
+        if(interaction.message){
+            return interaction.message.edit(options);
+        }
+        else if (interaction.replied || interaction.deferred) {
+            return interaction.editReply(options);
         } else {
-            await interaction.reply(options);
+            return interaction.reply(options);
         }
 
     } catch (error) {
@@ -99,3 +114,5 @@ module.exports = async (interaction) => {
         }
     }
 };
+
+

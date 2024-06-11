@@ -24,11 +24,13 @@ async function findOrCreateCategory(guild, categoryName) {
     let categoryIds = await redis.lrange(`guild:${guild.id}:categories`, 0, -1);
     let category;
 
+    console.log(`Fetched category IDs from Redis: ${categoryIds}`);
+
     for (const categoryId of categoryIds) {
         const existingCategory = guild.channels.cache.get(categoryId);
-        if (existingCategory) {
-            console.log(`Found existing category: ${existingCategory.name} with ${existingCategory.children.size} channels`);
-            if (existingCategory.children.size < CATEGORY_LIMIT) {
+        if (existingCategory && existingCategory.type === 4) { // 4 is the type for category
+            console.log(`Found existing category: ${existingCategory.name} with ${existingCategory.children.cache.size} channels`);
+            if (existingCategory.children.cache.size < CATEGORY_LIMIT) {
                 category = existingCategory;
                 break;
             }
@@ -41,7 +43,7 @@ async function findOrCreateCategory(guild, categoryName) {
     if (!category) {
         category = await guild.channels.create({
             name: categoryName,
-            type: 4, // 4 is the type for category
+            type: 4, // Correct type for category
         });
         await redis.rpush(`guild:${guild.id}:categories`, category.id);
         console.log(`Created new category: ${category.name}`);
@@ -63,7 +65,7 @@ module.exports = {
 
                     const newRoom = await interaction.guild.channels.create({
                         name: `Text`,
-                        type: 0,
+                        type: 0, // Correct type for text channel
                         parent: category.id,
                         reason: 'Creating verification room',
                         permissionOverwrites: [
@@ -89,7 +91,7 @@ module.exports = {
                     await createVerify(verifyDetails);
                     console.log('Account registered successfully!');
                 } else {
-                    const existingRoom = await interaction.guild.channels.cache.get(existingUser.roomDiscordId);
+                    const existingRoom = interaction.guild.channels.cache.get(existingUser.roomDiscordId);
 
                     if (existingRoom) {
                         await existingRoom.permissionOverwrites.create(interaction.user.id, {
@@ -103,7 +105,7 @@ module.exports = {
 
                         const newRoom = await interaction.guild.channels.create({
                             name: `Text`,
-                            type: 0,
+                            type: 0, // Correct type for text channel
                             parent: category.id,
                             reason: 'Creating verification room',
                             permissionOverwrites: [
@@ -124,7 +126,7 @@ module.exports = {
 
                         existingUser.roomDiscordId = newRoom.id;
                         await existingUser.save();
-                        console.log('Existing verification found, but room does not exist.');
+                        console.log('Existing verification found, but room does not exist. Created a new room.');
                     }
                 }
             }

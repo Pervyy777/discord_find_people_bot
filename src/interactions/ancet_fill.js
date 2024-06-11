@@ -338,7 +338,7 @@ async function ancetFillPhotos(interaction) {
                             response.data.pipe(fs.createWriteStream(filePath));
                             response.data.on('end', async () => {
                                 await photo.save();
-
+                                userDB.photos = []
                                 userDB.photos.push(photo._id);
                                 await userDB.save();
 
