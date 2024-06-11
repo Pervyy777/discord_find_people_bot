@@ -5,7 +5,7 @@ const {
     ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData
 } = require('../interactions/ancet_fill');
 const {
-    ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort
+    ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort, ancetLookNoMoreSearch
 } = require('../interactions/ancet_look');
 
 const {ancetAnswerLike, ancetAnswerDislike, ancetAnswerReport, ancetAnswerYes} = require('../interactions/ancet_answer');
@@ -20,11 +20,18 @@ module.exports = {
 
             if (userDB) {
                 userDB.lastActivity = Date.now();
-                if (!userDB.profile){
+            
+                // Find user profile by user id
+                const userProfile = await Profile.findOne({ _id: userDB.profile });
+
+                if (!userProfile) {
                     const profileDetails = {
                         user: userDB._id,
+                        gender: userDB.gender,
+                        interestingGender: userDB.interestingGender,
+                        ...(userDB.cityEn && { cityEn: userDB.cityEn, country: userDB.country }),
                     };
-
+            
                     const newProfile = new Profile(profileDetails);
                     await newProfile.save();
 
@@ -32,6 +39,7 @@ module.exports = {
                 }
                 await userDB.save();
             }
+            
             if (interaction.isCommand()) {
                 if (!userDB) {
                     return ancet_fill(interaction)
@@ -55,7 +63,7 @@ module.exports = {
                 log('i', 'Button interaction detected:', interaction.customId);
                 const chose = interaction.customId.split('_')[0];
                 const userChoice = interaction.customId.split('_')[1];
-                if(userChoice !== 'yesantwort' && chose !== 'ancetanswer'){
+                if(userChoice !== 'yesantwort' && userChoice !== 'nomoresearch' && chose !== 'ancetanswer'){
                     // Check if the user interacting with the buttons is the same as the sender
                     if (interaction.user.id !== interaction.message.interaction.user.id) {
                         return interaction.reply({content: 'Вы не являетесь отправителем этой операции.', ephemeral: true});
@@ -90,6 +98,9 @@ module.exports = {
                             case 'yesantwort':
                                 await ancetLookYesantwort(interaction);
                                 break;
+                                case 'nomoresearch':
+                                    await ancetLookNoMoreSearch(interaction)
+                                    break;
                         }
                         break;
                     case 'ancetanswer':

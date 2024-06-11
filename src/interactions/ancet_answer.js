@@ -57,6 +57,7 @@ async function ancetAnswerLike(interaction) {
                 .setDescription(`<@${existingUserUserDB.userDiscordId}>, ${existingUserUserDB.name}, ${existingUserUserDB.age}, ${existingUserUserDB.city} - ${existingUserUserDB.description}`);
 
             const userOptions = {
+                content: `<@${existingUserUserDB.userDiscordId}>`,
                 embeds: [userEmbedReply],
                 files: await fetchPhotoFiles(existingUserUserDB),
                 fetch: true
@@ -142,6 +143,7 @@ async function ancetAnswerYes(interaction) {
                 .setDescription(`<@${coupleUser.userDiscordId}>, ${coupleUser.name}, ${coupleUser.age}, ${coupleUser.city} - ${coupleUser.description}`);
 
                 const options = {
+                    content: `<@${existingUserUserDB.userDiscordId}>`,
                     embeds: [embedReply],
                     files: await fetchPhotoFiles(coupleUser),
                     fetch: true

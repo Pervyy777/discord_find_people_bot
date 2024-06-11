@@ -16,26 +16,27 @@ module.exports = async (interaction) => {
         let profile;
         const genderMatch = userDB.interestingGender === 'other' ? {} : {gender: userDB.interestingGender};
 
+        // Define an array of match conditions to try in order
+        const matchConditionsList = [
+            {...genderMatch, interestingGender: userDB.gender, cityEn: userDB.cityEn},
+            {...genderMatch, interestingGender: userDB.gender, country: userDB.country},
+            {...genderMatch, interestingGender: userDB.gender}
+        ];
+
         // Function to find profiles matching the user's preferences
         const findProfile = async (matchConditions) => {
+            
             return await Profile.findOne({
                 user: {$ne: userDB._id},
-                ratedUsers: {$ne: userDB._id}
-            }).populate({
-                path: 'user',
-                match: matchConditions
-            });
+                ratedUsers: {$ne: userDB._id},
+                ...matchConditions
+            })
         };
 
-        // Attempt to find a matching profile based on various conditions
-        profile = await findProfile({...genderMatch, interestingGender: userDB.gender, cityEn: userDB.cityEn});
-
-        if (!profile || !profile.user) {
-            profile = await findProfile({...genderMatch, interestingGender: userDB.gender, country: userDB.country});
-        }
-
-        if (!profile || !profile.user) {
-            profile = await findProfile({...genderMatch, interestingGender: userDB.gender});
+        // Iterate through the match conditions list until a suitable profile is found
+        for (const matchConditions of matchConditionsList) {
+            profile = await findProfile(matchConditions);
+            if (profile && profile.user) break;
         }
 
         if (!profile || !profile.user) {
@@ -49,10 +50,9 @@ module.exports = async (interaction) => {
                 files: []
             };
 
-            if(interaction.message){
+            if (interaction.message) {
                 await interaction.message.edit(options);
-            }
-            else if (interaction.replied || interaction.deferred) {
+            } else if (interaction.replied || interaction.deferred) {
                 await interaction.editReply(options);
             } else {
                 await interaction.reply(options);
@@ -96,10 +96,9 @@ module.exports = async (interaction) => {
             fetch: true
         };
 
-        if(interaction.message){
+        if (interaction.message) {
             return interaction.message.edit(options);
-        }
-        else if (interaction.replied || interaction.deferred) {
+        } else if (interaction.replied || interaction.deferred) {
             return interaction.editReply(options);
         } else {
             return interaction.reply(options);
@@ -114,5 +113,3 @@ module.exports = async (interaction) => {
         }
     }
 };
-
-

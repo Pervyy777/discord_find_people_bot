@@ -10,6 +10,22 @@ const profileSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'User',
     }],
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'other'],
+        required: true,
+    },
+    interestingGender: {
+        type: String,
+        enum: ['male', 'female', 'other'],
+        required: true,
+    },
+    cityEn: {
+        type: String,
+    },
+    country: {
+        type: String,
+    },
 });
 
 const Profile = model('Profile', profileSchema);

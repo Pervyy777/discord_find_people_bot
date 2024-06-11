@@ -225,6 +225,19 @@ async function ancetSaveData(interaction, name, age, city, description) {
     // Check if the user already exists in the database
     const existingUser = await User.findOne({ userDiscordId: interaction.user.id });
     if (existingUser) {
+
+        await Profile.findByIdAndDelete(existingUser.profile)
+
+        const newProfile = new Profile({
+            user: existingUser._id,        
+            gender,
+            interestingGender,
+            ...(cityFound && { cityEn: cityFound.cityNameEn, country: cityFound.country }),
+        })
+        await newProfile.save()
+
+        userDetails.profile = newProfile._id
+
         // Update the existing user's details
         Object.assign(existingUser, userDetails);
         existingUser.save().then(user => {
@@ -234,7 +247,19 @@ async function ancetSaveData(interaction, name, age, city, description) {
         });
     } else {
         // Create a new user
-        createUser(userDetails).then(user => {
+        createUser(userDetails).then(async (user) => {
+            const newProfile = new Profile({
+                user: user._id,         
+                gender,
+                interestingGender,
+                ...(cityFound && { cityEn: cityFound.cityNameEn, country: cityFound.country }),
+            })
+            await newProfile.save()
+    
+            user.profile = newProfile._id;
+
+            await user.save()
+
             console.log('Created user:', user);
         }).catch(error => {
             console.error('Error:', error);

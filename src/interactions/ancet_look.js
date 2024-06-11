@@ -170,4 +170,15 @@ async function ancetLookYesantwort(interaction) {
     await LIKED_USERS(interaction);
 }
 
-module.exports = { ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort };
+async function ancetLookNoMoreSearch(interaction) {
+    // Check if the user already exists in the database
+    const existingUser = await User.findOne({ userDiscordId: interaction.user.id });
+
+    await Profile.findByIdAndDelete(existingUser.profile)
+
+    existingUser.profile = null
+    await existingUser.save()
+    return interaction.reply("ready")
+}
+
+module.exports = { ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort , ancetLookNoMoreSearch};
