@@ -72,17 +72,17 @@ module.exports = async (interaction) => {
             .setDescription(`${randomProfile.name}, ${randomProfile.age}, ${randomProfile.city} - ${randomProfile.description}`);
 
         const like = new ButtonBuilder()
-            .setCustomId(`ancetlook_like_${randomProfile._id}`)
+            .setCustomId(`ancetlook_like_${profile._id}`)
             .setStyle(ButtonStyle.Primary)
             .setEmoji('👍');
 
         const dislike = new ButtonBuilder()
-            .setCustomId(`ancetlook_dislike_${randomProfile._id}`)
+            .setCustomId(`ancetlook_dislike_${profile._id}`)
             .setStyle(ButtonStyle.Primary)
             .setEmoji('👎');
 
         const report = new ButtonBuilder()
-            .setCustomId(`ancetlook_report_${randomProfile._id}`)
+            .setCustomId(`ancetlook_report_${profile._id}`)
             .setLabel('Пожаловаться')
             .setStyle(ButtonStyle.Danger)
             .setEmoji('⚠️');

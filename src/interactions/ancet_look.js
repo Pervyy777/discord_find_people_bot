@@ -10,17 +10,17 @@ const fetchPhotoFiles = require("../utils/takePhotos");
 async function ancetLookLike(interaction) {
     try {
         console.log(interaction.customId)
-        const userID = interaction.customId.split('_')[2];
+        const profileID = interaction.customId.split('_')[2];
 
-        const existingUserProfile = await Profile.findOne({ user: userID });
-        const existingUserUserDB = await User.findOne({ _id: userID });
+        const existingUserProfile = await Profile.findOne({ _id: profileID });
+        const existingUserUserDB = await User.findOne({ profile: profileID });
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (!existingUserProfile) {
-            console.log('Profile not found for user ID:', userID);
+            console.log('Profile not found for ID:', profileID);
         }
         if (!existingUserUserDB) {
-            console.log('User not found for ID:', userID);
+            console.log('User not found for ID:', profileID);
         }
         if (!UserDB) {
             console.log('Current user not found for Discord ID:', interaction.user.id);
@@ -107,13 +107,13 @@ async function ancetLookLike(interaction) {
 
 async function ancetLookDislike(interaction) {
     try {
-        const userID = interaction.customId.split('_')[2];
+        const profileID = interaction.customId.split('_')[2];
 
-        const existingUserProfile = await Profile.findOne({ user: userID });
+        const existingUserProfile = await Profile.findOne({ _id: profileID });
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (!existingUserProfile) {
-            console.log('Profile not found for user ID: ', userID);
+            console.log('Profile not found for ID: ', profileID);
         }
         if (!UserDB) {
             console.log('Current user not found for Discord ID: ', interaction.user.id);
@@ -138,10 +138,10 @@ async function ancetLookDislike(interaction) {
 
 async function ancetLookReport(interaction) {
     try {
-        const userID = interaction.customId.split('_')[2];
+        const profileID = interaction.customId.split('_')[2];
             // Create the modal
     const modal = new ModalBuilder()
-    .setCustomId(`ancet_reportlook_${userID}`)
+    .setCustomId(`ancet_reportlook_${profileID}`)
     .setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
 
 // Add components to modal

@@ -28,7 +28,7 @@ async function ancetAnswerLike(interaction) {
     console.error('Error saving user:', error);
   }
 
-            if (!existingUserProfile.couple.includes(UserDB._id)) {
+            if (!existingUserUserDB.couple.includes(UserDB._id)) {
 
             // Push the ObjectId to the couple array
             existingUserUserDB.couple.push(UserDB._id);
@@ -44,11 +44,12 @@ async function ancetAnswerLike(interaction) {
                 .setDescription(text);
 
             const yes = new ButtonBuilder()
-                .setCustomId(`ancetanswer_yes_${existingUserUserDB._id}`)
+                .setCustomId(`ancetanswer_yes`)
                 .setStyle(ButtonStyle.Primary)
                 .setLabel('Да');
 
             const choseRow = new ActionRowBuilder().addComponents(yes);
+
 
             const options = {
                 embeds: [embedReply],
@@ -120,10 +121,9 @@ async function ancetAnswerDislike(interaction) {
 async function ancetAnswerReport(interaction) {
     try {
         const likeID = interaction.customId.split('_')[3];
-        const userID = interaction.customId.split('_')[2];
         // Create the modal
 const modal = new ModalBuilder()
-.setCustomId(`ancet_reportanswer_${userID}_${likeID}`)
+.setCustomId(`ancet_reportanswer_${likeID}`)
 .setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
 
 // Add components to modal
@@ -157,18 +157,11 @@ return interaction.showModal(modal);
 
 async function ancetAnswerYes(interaction) {
     try {
-        const userID = interaction.customId.split('_')[2];
-
         const userDB = await User.findOne({ userDiscordId: interaction.user.id }).populate('couple');
 
         if (!userDB) {
             console.log('User not found');
             return interaction.reply("Пользователь не найден");
-        }
-
-        console.log(userDB._id.toString(), userID)
-        if (userDB._id.toString() !== userID) {
-            return interaction.reply("У вас нет доступа к этому перебору взаимных симпатий");
         }
 
         if (userDB.couple && userDB.couple.length > 0) {
