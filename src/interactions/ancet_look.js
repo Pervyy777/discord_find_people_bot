@@ -4,7 +4,7 @@ const Profile = require("../models/profile");
 const Verify = require("../models/verify");
 const SEARCH = require("../utils/search");
 const LIKED_USERS = require("../utils/likedUsers");
-const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
 const fetchPhotoFiles = require("../utils/takePhotos");
 
 async function ancetLookLike(interaction) {
@@ -96,10 +96,10 @@ async function ancetLookLike(interaction) {
                 console.error('Error sending message to the user:', error);
             }}
 */
-            return SEARCH(interaction);
         } else {
             console.log('User or profile not found, unable to process like interaction.');
         }
+        return SEARCH(interaction);
     } catch (error) {
         console.error('An error occurred:', error);
     }
@@ -126,10 +126,10 @@ async function ancetLookDislike(interaction) {
             } else {
                 console.log('User has already rated this profile.');
             }
-            return SEARCH(interaction);
         } else {
             console.log('User or profile not found, unable to process dislike interaction.');
         }
+        return SEARCH(interaction);
     } catch (error) {
         console.error('An error occurred:', error);
     }
@@ -139,6 +139,36 @@ async function ancetLookDislike(interaction) {
 async function ancetLookReport(interaction) {
     try {
         const userID = interaction.customId.split('_')[2];
+            // Create the modal
+    const modal = new ModalBuilder()
+    .setCustomId(`ancet_reportlook_${userID}`)
+    .setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
+
+// Add components to modal
+const reason = new TextInputBuilder()
+    .setCustomId('reason')
+    .setLabel("Введите причину жалобы")
+    .setStyle(TextInputStyle.Short)
+    .setRequired(true);
+
+const descriptionInput = new TextInputBuilder()
+    .setCustomId('description')
+    .setLabel("Расскажите подробнее")
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(false);
+
+
+// An action row only holds one text input,
+const actionRow1 = new ActionRowBuilder().addComponents(reason);
+const actionRow2 = new ActionRowBuilder().addComponents(descriptionInput);
+
+// Add inputs to the modal
+modal.addComponents(actionRow1, actionRow2);
+
+// Show the modal to the user
+return interaction.showModal(modal);
+
+        /*const userID = interaction.customId.split('_')[2];
 
         const existingUserProfile = await Profile.findOne({ user: userID });
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
@@ -160,7 +190,7 @@ async function ancetLookReport(interaction) {
             return SEARCH(interaction);
         } else {
             console.log('User or profile not found, unable to process report interaction.');
-        }
+        }*/
     } catch (error) {
         console.error('An error occurred:', error);
     }

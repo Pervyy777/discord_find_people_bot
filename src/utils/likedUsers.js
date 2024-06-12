@@ -31,17 +31,17 @@ module.exports = async (interaction) => {
             .setDescription(`${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}`);
 
         const likeButton = new ButtonBuilder()
-            .setCustomId(`ancetanswer_like_${likedUser._id}`)
+            .setCustomId(`ancetanswer_like_${likeDB._id}`)
             .setStyle(ButtonStyle.Primary)
             .setEmoji('👍');
 
         const dislikeButton = new ButtonBuilder()
-            .setCustomId(`ancetanswer_dislike_${likedUser._id}`)
+            .setCustomId(`ancetanswer_dislike_${likeDB._id}`)
             .setStyle(ButtonStyle.Primary)
             .setEmoji('👎');
 
         const reportButton = new ButtonBuilder()
-            .setCustomId(`ancetanswer_report_${likedUser._id}`)
+            .setCustomId(`ancetanswer_report_${likeDB._id}`)
             .setLabel('Пожаловаться')
             .setStyle(ButtonStyle.Danger)
             .setEmoji('⚠️');

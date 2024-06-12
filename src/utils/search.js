@@ -92,8 +92,7 @@ module.exports = async (interaction) => {
         const options = {
             embeds: [embedReply],
             components: [choseRow],
-            files: await fetchPhotoFiles(randomProfile),
-            fetch: true
+            files: await fetchPhotoFiles(randomProfile)
         };
 
         if (interaction.message) {

@@ -9,18 +9,31 @@ const fetchPhotoFiles = require("../utils/takePhotos");
 
 async function ancetAnswerLike(interaction) {
     try {
-        const userID = interaction.customId.split('_')[2];
-
-        const existingUserUserDB =  await User.findOne({ _id: userID });
+        const likeID = interaction.customId.split('_')[2];
+        const likeDB = await Like.findOne({ _id: likeID });
+        const existingUserUserDB =  await User.findOne({ _id: likeDB.userWhoLiked });
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
-        if (UserDB && existingUserUserDB) {
-            UserDB.liked.shift();
-            await UserDB.save();
+        if (UserDB && existingUserUserDB && UserDB._id.toString() === likeDB.userLiked.toString() ) {
+               // Convert ObjectId to string for comparison
+   UserDB.liked = UserDB.liked.filter(function(item) {
+    return item.toString() !== likeDB._id.toString();
+  });
+
+  // Save the updated user object
+  try {
+    await UserDB.save();
+    console.log('Like removed and user saved successfully.');
+  } catch (error) {
+    console.error('Error saving user:', error);
+  }
+
+            if (!existingUserProfile.couple.includes(UserDB._id)) {
 
             // Push the ObjectId to the couple array
             existingUserUserDB.couple.push(UserDB._id);
             await existingUserUserDB.save();
+
 
             let text = existingUserUserDB.couple.length < 2 
                 ? `У тебя есть ${existingUserUserDB.couple.length} взаимная симпатия, показать её?` 
@@ -71,11 +84,12 @@ async function ancetAnswerLike(interaction) {
             } catch (error) {
                 console.error('Error sending message:', error);
             }
-
-            return LIKED_USERS(interaction);
+        }
+            
         } else {
             console.log('User not found');
         }
+        return LIKED_USERS(interaction);
     } catch (error) {
         console.error('An error occurred:', error);
     }
@@ -84,17 +98,20 @@ async function ancetAnswerLike(interaction) {
 
 async function ancetAnswerDislike(interaction) {
     try {
-        const userID = interaction.customId.split('_')[2];
-
+        const likeID = interaction.customId.split('_')[2];
+        const likeDB = await Like.findOne({ _id: likeID });
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
-        if (UserDB ) {
-            UserDB.liked.shift();
+        if (UserDB && likeDB) {
+   // Convert ObjectId to string for comparison
+   UserDB.liked = UserDB.liked.filter(function(item) {
+    return item.toString() !== likeDB._id.toString();
+  });
             await UserDB.save();
-            return LIKED_USERS(interaction)
         } else {
             console.log('User not found');
         }
+        return LIKED_USERS(interaction)
     } catch (error) {
         console.error('An error occurred:', error);
     }
@@ -102,18 +119,36 @@ async function ancetAnswerDislike(interaction) {
 
 async function ancetAnswerReport(interaction) {
     try {
+        const likeID = interaction.customId.split('_')[3];
         const userID = interaction.customId.split('_')[2];
+        // Create the modal
+const modal = new ModalBuilder()
+.setCustomId(`ancet_reportanswer_${userID}_${likeID}`)
+.setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
 
-        const existingUserProfile = await Profile.findOne({ user: userID });
-        const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
+// Add components to modal
+const reason = new TextInputBuilder()
+.setCustomId('reason')
+.setLabel("Введите причину жалобы")
+.setStyle(TextInputStyle.Short)
+.setRequired(true);
 
-        if (existingUserProfile && UserDB ) {
-            existingUserProfile.ratedUsers += UserDB._id;
-            await existingUserProfile.save();
-            return SEARCH(interaction)
-        } else {
-            console.log('User not found');
-        }
+const descriptionInput = new TextInputBuilder()
+.setCustomId('description')
+.setLabel("Расскажите подробнее")
+.setStyle(TextInputStyle.Paragraph)
+.setRequired(false);
+
+
+// An action row only holds one text input,
+const actionRow1 = new ActionRowBuilder().addComponents(reason);
+const actionRow2 = new ActionRowBuilder().addComponents(descriptionInput);
+
+// Add inputs to the modal
+modal.addComponents(actionRow1, actionRow2);
+
+// Show the modal to the user
+return interaction.showModal(modal);
     } catch (error) {
         console.error('An error occurred:', error);
     }
@@ -143,7 +178,7 @@ async function ancetAnswerYes(interaction) {
                 .setDescription(`<@${coupleUser.userDiscordId}>, ${coupleUser.name}, ${coupleUser.age}, ${coupleUser.city} - ${coupleUser.description}`);
 
                 const options = {
-                    content: `<@${existingUserUserDB.userDiscordId}>`,
+                    content: `<@${coupleUser.userDiscordId}>`,
                     embeds: [embedReply],
                     files: await fetchPhotoFiles(coupleUser),
                     fetch: true
