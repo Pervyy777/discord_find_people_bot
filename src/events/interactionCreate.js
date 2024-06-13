@@ -10,6 +10,7 @@ const {
 
 const {ancetAnswerLike, ancetAnswerDislike, ancetAnswerReport, ancetAnswerYes} = require('../interactions/ancet_answer');
 const Profile  = require('../models/profile');
+const {ancetAnswerReportModal, ancetLookReportModal } = require('../interactions/ancet_report')
 
 module.exports = {
     name: 'interactionCreate',
@@ -142,6 +143,20 @@ module.exports = {
                                 break;
                         }
                         break;
+                        case 'ancetanswer':
+                            switch (userChoice) {
+                                case 'report':
+                                    await ancetAnswerReportModal(interaction);
+                                    break;
+                            }
+                            break;
+                            case 'ancetlook':
+                                switch (userChoice) {
+                                    case 'report':
+                                        await ancetLookReportModal(interaction);
+                                        break;
+                                }
+                                break;
                     default:
                         log('w', 'Unknown modal interaction:', interaction.customId);
                 }

@@ -141,7 +141,7 @@ async function ancetLookReport(interaction) {
         const profileID = interaction.customId.split('_')[2];
             // Create the modal
     const modal = new ModalBuilder()
-    .setCustomId(`ancet_reportlook_${profileID}`)
+    .setCustomId(`ancetlook_report_${profileID}`)
     .setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
 
 // Add components to modal

@@ -4,7 +4,7 @@ const Profile = require("../models/profile");
 const Verify = require("../models/verify");
 const SEARCH = require("../utils/search");
 const LIKED_USERS = require("../utils/likedUsers");
-const {EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder} = require("discord.js");
+const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
 const fetchPhotoFiles = require("../utils/takePhotos");
 
 async function ancetAnswerLike(interaction) {
@@ -120,10 +120,10 @@ async function ancetAnswerDislike(interaction) {
 
 async function ancetAnswerReport(interaction) {
     try {
-        const likeID = interaction.customId.split('_')[3];
+        const likeID = interaction.customId.split('_')[2];
         // Create the modal
 const modal = new ModalBuilder()
-.setCustomId(`ancet_reportanswer_${likeID}`)
+.setCustomId(`ancetanswer_report_${likeID}`)
 .setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
 
 // Add components to modal
