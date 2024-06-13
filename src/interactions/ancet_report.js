@@ -106,7 +106,6 @@ UserDB.liked = UserDB.liked.filter(function(item) {
 
 async function ancetLookReportModal(interaction) {
     try {
-        console.log(interaction.customId)
         const profileID = interaction.customId.split('_')[2];
         const reason = interaction.fields.getTextInputValue('reason');
         const description = interaction.fields.getTextInputValue('description');
@@ -196,6 +195,81 @@ async function ancetLookReportModal(interaction) {
 }
 
 
+async function ancetReportBan(interaction) {
+    try {
+        const reportID = interaction.customId.split('_')[2];
+
+                // Create the modal
+const modal = new ModalBuilder()
+.setCustomId(`ancetreport_ban_${reportID}`)
+.setTitle('БЛОКИРОВКА ПОЛЬЗОВАТЕЛЯ');
+
+// Add components to modal
+const time = new TextInputBuilder()
+.setCustomId('time')
+.setLabel("Время блокировки(в часах)")
+.setStyle(TextInputStyle.Short)
+.setValue("1")
+.setRequired(true);
+
+const rool = new TextInputBuilder()
+.setCustomId('rool')
+.setLabel("Причина блокировки")
+.setStyle(TextInputStyle.Short)
+.setPlaceholder('1.2')
+.setRequired(true);
 
 
-module.exports = {ancetAnswerReportModal, ancetLookReportModal }
+// An action row only holds one text input,
+const actionRow1 = new ActionRowBuilder().addComponents(rool);
+const actionRow2 = new ActionRowBuilder().addComponents(time);
+
+// Add inputs to the modal
+modal.addComponents(actionRow1, actionRow2);
+
+// Show the modal to the user
+return interaction.showModal(modal);
+    } catch (error) {
+        console.error('An error occurred:', error);
+    }
+}
+
+async function ancetReportBanModal(interaction) {
+    try {
+        const reportID = interaction.customId.split('_')[2];
+        const time = interaction.fields.getTextInputValue('time');
+        const rool = interaction.fields.getTextInputValue('rool');
+
+        const reportDB = await Report.findOne({ _id: reportID });
+        const existingUserUserDB =  await User.findOne({ _id: reportDB.user });
+        const verifyUsersDB = await Verify.findOne({userDiscordId: existingUserUserDB.userDiscordId})
+
+        if (existingUserUserDB, reportDB, !verifyUsersDB.ban ) {
+await interaction.deferUpdate()
+        const banDetails = {
+            userDiscordID: existingUserUserDB.userDiscordId,
+            dateUntil: new Date(Date.now() + time * 60 * 60 * 1000),
+            moderatorDiscordID: interaction.user.id,
+            report: reportDB._id,
+            reason: rool,
+        };
+
+        const newBan = new Ban(banDetails);
+        await newBan.save(); 
+
+
+        verifyUsersDB.ban = newBan._id
+        await verifyUsersDB.save()
+        
+        return interaction.message.edit({
+            content:'Baned',
+            components:[]})
+        }
+    } catch (error) {
+        console.error('An error occurred:', error);
+    }
+}
+
+
+
+module.exports = {ancetAnswerReportModal, ancetLookReportModal, ancetReportBanModal, ancetReportBan }

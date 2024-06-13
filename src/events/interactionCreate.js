@@ -10,7 +10,7 @@ const {
 
 const {ancetAnswerLike, ancetAnswerDislike, ancetAnswerReport, ancetAnswerYes} = require('../interactions/ancet_answer');
 const Profile  = require('../models/profile');
-const {ancetAnswerReportModal, ancetLookReportModal } = require('../interactions/ancet_report')
+const {ancetAnswerReportModal, ancetLookReportModal, ancetReportBanModal, ancetReportBan } = require('../interactions/ancet_report')
 
 module.exports = {
     name: 'interactionCreate',
@@ -64,7 +64,7 @@ module.exports = {
                 log('i', 'Button interaction detected:', interaction.customId);
                 const chose = interaction.customId.split('_')[0];
                 const userChoice = interaction.customId.split('_')[1];
-                if(userChoice !== 'yesantwort' && userChoice !== 'nomoresearch' && chose !== 'ancetanswer'){
+                if(userChoice !== 'yesantwort' && userChoice !== 'nomoresearch' && chose !== 'ancetanswer' && chose !== "ancetreport"){
                     // Check if the user interacting with the buttons is the same as the sender
                     if (interaction.user.id !== interaction.message.interaction.user.id) {
                         return interaction.reply({content: 'Вы не являетесь отправителем этой операции.', ephemeral: true});
@@ -120,6 +120,13 @@ module.exports = {
                                 break;
                         }
                         break;
+                        case 'ancetreport':
+                            switch (userChoice) {
+                                case 'ban':
+                                    await ancetReportBan(interaction);
+                                    break;
+                            }
+                            break;
                     default:
                         log('w', 'Unknown button interaction:', interaction.customId);
                 }
@@ -157,6 +164,13 @@ module.exports = {
                                         break;
                                 }
                                 break;
+                                case 'ancetreport':
+                                    switch (userChoice) {
+                                        case 'ban':
+                                            await ancetReportBanModal(interaction);
+                                            break;
+                                    }
+                                    break;
                     default:
                         log('w', 'Unknown modal interaction:', interaction.customId);
                 }

@@ -11,6 +11,10 @@ const verifySchema = new Schema({
         required: true,
         unique: true,
     },
+    ban: {
+        type: Schema.Types.ObjectId,
+        ref: 'Ban',
+    },
 
 });
 

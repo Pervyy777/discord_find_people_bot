@@ -8,6 +8,10 @@ const banSchema = new Schema({
         type: Date,
         default: Date.now
     },
+    dateUntil:{
+        type: Date,
+        default: Date.now
+    },
     moderatorDiscordID: {
         type: String,
     },
