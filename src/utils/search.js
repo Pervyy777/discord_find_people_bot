@@ -5,8 +5,8 @@ const fetchPhotoFiles = require('./takePhotos');
 
 module.exports = async (interaction) => {
     try {
-        await interaction.deferReply();
-
+        if (!interaction.message)await interaction.deferReply();
+        else await interaction.deferUpdate();
         const userDB = await User.findOne({userDiscordId: interaction.user.id});
         if (!userDB) {
             await interaction.editReply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
@@ -78,6 +78,11 @@ module.exports = async (interaction) => {
 
         const dislike = new ButtonBuilder()
             .setCustomId(`ancetlook_dislike_${profile._id}`)
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji('👎');
+
+        const likemessage = new ButtonBuilder()
+            .setCustomId(`ancetlook_like_${profile._id}`)
             .setStyle(ButtonStyle.Primary)
             .setEmoji('👎');
 

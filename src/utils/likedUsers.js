@@ -6,7 +6,6 @@ const fetchPhotoFiles = require('./takePhotos');
 
 module.exports = async (interaction) => {
     try {
-
         const userDB = await User.findOne({ userDiscordId: interaction.user.id });
         if (!userDB) {
             await interaction.editReply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
@@ -18,6 +17,9 @@ module.exports = async (interaction) => {
 
         }
 
+        if (!interaction.message)await interaction.deferReply();
+        else await interaction.deferUpdate();
+        
         const likeDB = await Like.findById(userDB.liked[0])
         const likedUser = await User.findById(likeDB.userWhoLiked);
         if (!likedUser) {
