@@ -81,10 +81,10 @@ module.exports = async (interaction) => {
             .setStyle(ButtonStyle.Primary)
             .setEmoji('👎');
 
-        const likemessage = new ButtonBuilder()
-            .setCustomId(`ancetlook_like_${profile._id}`)
-            .setStyle(ButtonStyle.Primary)
-            .setEmoji('👎');
+        const message = new ButtonBuilder()
+            .setCustomId(`ancetlook_message_${profile._id}`)
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji('💌');
 
         const report = new ButtonBuilder()
             .setCustomId(`ancetlook_report_${profile._id}`)
@@ -92,7 +92,7 @@ module.exports = async (interaction) => {
             .setStyle(ButtonStyle.Danger)
             .setEmoji('⚠️');
 
-        const choseRow = new ActionRowBuilder().addComponents(like, dislike, report);
+        const choseRow = new ActionRowBuilder().addComponents(message, like, dislike, report);
 
         const options = {
             embeds: [embedReply],

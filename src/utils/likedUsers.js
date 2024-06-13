@@ -19,7 +19,7 @@ module.exports = async (interaction) => {
 
         if (!interaction.message)await interaction.deferReply();
         else await interaction.deferUpdate();
-        
+
         const likeDB = await Like.findById(userDB.liked[0])
         const likedUser = await User.findById(likeDB.userWhoLiked);
         if (!likedUser) {
@@ -27,10 +27,10 @@ module.exports = async (interaction) => {
             await interaction.editReply('Произошла ошибка при поиске профиля пользователя. Пожалуйста, попробуйте еще раз позже.');
             return;
         }
-
+        const text = likeDB.message? `\n \nСообщение от пользователя: ${likeDB.message}` : ""
         const embedReply = new EmbedBuilder()
             .setColor(0x000000)
-            .setDescription(`${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}`);
+            .setDescription(`${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}${text}`);
 
         const likeButton = new ButtonBuilder()
             .setCustomId(`ancetanswer_like_${likeDB._id}`)

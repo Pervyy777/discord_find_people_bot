@@ -5,7 +5,7 @@ const {
     ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData
 } = require('../interactions/ancet_fill');
 const {
-    ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort, ancetLookNoMoreSearch
+    ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort, ancetLookNoMoreSearch, ancetLookMessage
 } = require('../interactions/ancet_look');
 
 const {ancetAnswerLike, ancetAnswerDislike, ancetAnswerReport, ancetAnswerYes} = require('../interactions/ancet_answer');
@@ -102,6 +102,10 @@ module.exports = {
                                 case 'nomoresearch':
                                     await ancetLookNoMoreSearch(interaction)
                                     break;
+                                    case 'message':
+                                        console.log("lol")
+                                        await ancetLookMessage(interaction)
+                                        break;
                         }
                         break;
                     case 'ancetanswer':
@@ -162,6 +166,10 @@ module.exports = {
                                     case 'report':
                                         await ancetLookReportModal(interaction);
                                         break;
+                                        case 'message':
+                                            console.log("lol")
+                                            await ancetLookLike(interaction)
+                                            break;
                                 }
                                 break;
                                 case 'ancetreport':

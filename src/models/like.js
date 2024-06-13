@@ -15,6 +15,9 @@ const likeSchema = new Schema({
         ref: 'User',
         required: true,
     },
+    message:{
+        type: String,
+    }
 });
 
 const Like = model('Like', likeSchema);

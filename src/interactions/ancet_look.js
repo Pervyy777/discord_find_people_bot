@@ -28,9 +28,11 @@ async function ancetLookLike(interaction) {
 
         if (existingUserProfile && UserDB && existingUserUserDB) {
             if (!existingUserProfile.ratedUsers.includes(UserDB._id)) {
+            const message = interaction.fields.getTextInputValue('message');
             const likeDetails = {
                 userLiked: existingUserUserDB._id,
                 userWhoLiked: UserDB._id,
+                ...(message && { message}),
             };
 
             const newLike = new Like(likeDetails);
@@ -167,30 +169,6 @@ modal.addComponents(actionRow1, actionRow2);
 
 // Show the modal to the user
 return interaction.showModal(modal);
-
-        /*const userID = interaction.customId.split('_')[2];
-
-        const existingUserProfile = await Profile.findOne({ user: userID });
-        const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
-
-        if (!existingUserProfile) {
-            console.log('Profile not found for user ID:', userID);
-        }
-        if (!UserDB) {
-            console.log('Current user not found for Discord ID:', interaction.user.id);
-        }
-
-        if (existingUserProfile && UserDB) {
-            if (!existingUserProfile.ratedUsers.includes(UserDB._id)) {
-                existingUserProfile.ratedUsers.push(UserDB._id);
-                await existingUserProfile.save();
-            } else {
-                console.log('User has already rated this profile.');
-            }
-            return SEARCH(interaction);
-        } else {
-            console.log('User or profile not found, unable to process report interaction.');
-        }*/
     } catch (error) {
         console.error('An error occurred:', error);
     }
@@ -211,4 +189,32 @@ async function ancetLookNoMoreSearch(interaction) {
     return interaction.reply("ready")
 }
 
-module.exports = { ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort , ancetLookNoMoreSearch};
+async function ancetLookMessage(interaction) {
+    try {
+        const profileID = interaction.customId.split('_')[2];
+            // Create the modal
+    const modal = new ModalBuilder()
+    .setCustomId(`ancetlook_message_${profileID}`)
+    .setTitle('СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЮ');
+
+// Add components to modal
+const message = new TextInputBuilder()
+    .setCustomId('message')
+    .setLabel("Введите ваше сообщение пользователю")
+    .setStyle(TextInputStyle.Paragraph)
+    .setRequired(true);
+
+// An action row only holds one text input,
+const actionRow1 = new ActionRowBuilder().addComponents(message);
+
+// Add inputs to the modal
+modal.addComponents(actionRow1);
+
+// Show the modal to the user
+return interaction.showModal(modal);
+    } catch (error) {
+        console.error('An error occurred:', error);
+    }
+}
+
+module.exports = { ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort , ancetLookNoMoreSearch, ancetLookMessage};
