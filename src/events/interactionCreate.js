@@ -7,16 +7,26 @@ const {
 const {
     ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort, ancetLookNoMoreSearch, ancetLookMessage
 } = require('../interactions/ancet_look');
-
 const {ancetAnswerLike, ancetAnswerDislike, ancetAnswerReport, ancetAnswerYes} = require('../interactions/ancet_answer');
 const Profile  = require('../models/profile');
 const {ancetAnswerReportModal, ancetLookReportModal, ancetReportBanModal, ancetReportBan } = require('../interactions/ancet_report')
-
+const Verify  = require('../models/verify');
+const Ban  = require('../models/ban');
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
         log("i", "interactionCreate");
         try {
+            const verifyDB = await Verify.findOne({userDiscordId: interaction.user.id})
+            if (verifyDB && !!verifyDB.ban) {
+                const banDB = await Verify.findOne({ userDiscordId: interaction.user.id });
+                if (banDB) {
+                    return interaction.reply({
+                        content: `Вы были огранчены по причине ${banDB.reason} до ${banDB.dateUntil}.`,
+                        ephemeral: true
+                    });
+                }
+            }
             const userDB = await User.findOne({userDiscordId: interaction.user.id});
 
             if (userDB) {
