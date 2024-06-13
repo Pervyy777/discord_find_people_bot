@@ -51,7 +51,7 @@ UserDB.liked = UserDB.liked.filter(function(item) {
 
             const ban = new ButtonBuilder()
                 .setCustomId(`ancetreport_ban_${newReport._id}`)
-                .setStyle(ButtonStyle.Primary)
+                .setStyle(ButtonStyle.Danger)
                 .setLabel('Ban')
                 .setEmoji('🔨');
 
