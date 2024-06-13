@@ -83,7 +83,7 @@ module.exports = async (interaction) => {
 
         const message = new ButtonBuilder()
             .setCustomId(`ancetlook_message_${profile._id}`)
-            .setStyle(ButtonStyle.Secondary)
+            .setStyle(ButtonStyle.Success)
             .setEmoji('💌');
 
         const report = new ButtonBuilder()

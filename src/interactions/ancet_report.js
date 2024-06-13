@@ -139,10 +139,9 @@ async function ancetLookReportModal(interaction) {
             const newReport = new Report(reportDetails);
             await newReport.save();  
 
-const text = likeDB.message? `\n \nСообщение от пользователя: ${likeDB.message}` : ""
         const embed = new EmbedBuilder()
         .setColor(0x000000)
-        .setDescription(`${existingUserUserDB.name}, ${existingUserUserDB.age}, ${existingUserUserDB.city} - ${existingUserUserDB.description}${text}\n\nreason: ${reason}\ndescription: ${description}`);
+        .setDescription(`${existingUserUserDB.name}, ${existingUserUserDB.age}, ${existingUserUserDB.city} - ${existingUserUserDB.description}\n\nreason: ${reason}\ndescription: ${description}`);
 
         const ban = new ButtonBuilder()
             .setCustomId(`ancetreport_ban_${newReport._id}`)
@@ -269,46 +268,5 @@ await interaction.deferUpdate()
         console.error('An error occurred:', error);
     }
 }
-
-
-async function ancetReportBan(interaction) {
-    try {
-        const reportID = interaction.customId.split('_')[2];
-
-                // Create the modal
-const modal = new ModalBuilder()
-.setCustomId(`ancetreport_ban_${reportID}`)
-.setTitle('БЛОКИРОВКА ПОЛЬЗОВАТЕЛЯ');
-
-// Add components to modal
-const time = new TextInputBuilder()
-.setCustomId('time')
-.setLabel("Время блокировки(в часах)")
-.setStyle(TextInputStyle.Short)
-.setValue("1")
-.setRequired(true);
-
-const rool = new TextInputBuilder()
-.setCustomId('rool')
-.setLabel("Причина блокировки")
-.setStyle(TextInputStyle.Short)
-.setPlaceholder('1.2')
-.setRequired(true);
-
-
-// An action row only holds one text input,
-const actionRow1 = new ActionRowBuilder().addComponents(rool);
-const actionRow2 = new ActionRowBuilder().addComponents(time);
-
-// Add inputs to the modal
-modal.addComponents(actionRow1, actionRow2);
-
-// Show the modal to the user
-return interaction.showModal(modal);
-    } catch (error) {
-        console.error('An error occurred:', error);
-    }
-}
-
 
 module.exports = {ancetAnswerReportModal, ancetLookReportModal, ancetReportBanModal, ancetReportBan }
