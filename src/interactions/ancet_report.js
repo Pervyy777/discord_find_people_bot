@@ -259,6 +259,11 @@ await interaction.deferUpdate()
 
         verifyUsersDB.ban = newBan._id
         await verifyUsersDB.save()
+
+        await Profile.findByIdAndDelete(existingUserUserDB.profile)
+
+        existingUserUserDB.profile = null
+        await existingUserUserDB.save()
         
         return interaction.message.edit({
             content:'Baned',
