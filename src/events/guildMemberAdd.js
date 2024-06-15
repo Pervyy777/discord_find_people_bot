@@ -1,6 +1,6 @@
 const Verify = require('../models/verify');
 const log = require("../utils/debugLog");
-const { PermissionsBitField } = require('discord.js');
+const { PermissionsBitField, EmbedBuilder } = require('discord.js');
 const Redis = require('ioredis');
 
 // Set up Redis client
@@ -89,6 +89,20 @@ module.exports = {
                         roomDiscordId: newRoom.id,
                     };
                     await createVerify(verifyDetails);
+                    
+                    const startMessageEmbed = new EmbedBuilder()
+                    .setTitle('Добро пожаловать в канал поиска людей из вашего города!')
+                    .setDescription(`
+                        Перед использованием бота советуем ознакомиться с правилами в канале <#1243259987229278360>. Если у вас возникли вопросы или вам нужна помощь, загляните в канал <#1249368481225244793>.
+                
+                        Чтобы найти людей из вашего города, просто используйте команду "/search", указав свое имя, возраст, город и что ищете. 
+                
+                        Пожалуйста, будьте вежливы и уважайте других участников канала. Надеемся, вы найдете интересных людей и проведете время с пользой!
+                    `);
+
+                    // Assuming `newRoom` is the object representing the room or channel to send the message
+                    newRoom.send({embeds: [startMessageEmbed]});
+
                     console.log('Account registered successfully!');
                 } else {
                     const existingRoom = interaction.guild.channels.cache.get(existingUser.roomDiscordId);
