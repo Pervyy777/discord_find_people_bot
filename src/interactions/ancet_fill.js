@@ -7,6 +7,7 @@ const axios = require('axios');
 const path = require('path');
 const Photo = require('../models/photo');
 const Profile = require('../models/profile');
+const { v4: uuidv4 } = require('uuid');
 
 async function createUser(userDetails) {
     try {
@@ -275,21 +276,6 @@ async function ensureDirectoryExists(dirPath) {
     }
 }
 
-function getUniqueFileName(filePath) {
-    const dir = path.dirname(filePath);
-    const ext = path.extname(filePath);
-    const baseName = path.basename(filePath, ext);
-    let uniqueFilePath = filePath;
-    let counter = 1;
-
-    while (fs.existsSync(uniqueFilePath)) {
-        uniqueFilePath = path.join(dir, `${baseName}-${counter}${ext}`);
-        counter++;
-    }
-
-    return uniqueFilePath;
-}
-
 async function ancetFillPhotos(interaction) {
     const embedReply = new EmbedBuilder()
         .setColor(0x000000)
@@ -333,6 +319,13 @@ async function ancetFillPhotos(interaction) {
 
             let uploadedFiles = 0;
 
+                        // Clear the user's photos array
+                        const userDB = await User.findOne({ userDiscordId: interaction.user.id });
+                        if (userDB) {
+                            userDB.photos = [];
+                            await userDB.save();
+                        }
+
             messageCollector.on('collect', async (message) => {
                 const attachments = message.attachments;
 
@@ -346,11 +339,8 @@ async function ancetFillPhotos(interaction) {
 
                     if (attachment.contentType.startsWith('image/') || (attachment.contentType.startsWith('video/') && attachment.size <= 15 * 1024 * 1024)) {
                         const fileUrl = attachment.url;
-                        const originalFileName = attachment.name;
-                        const userDir = path.join(__dirname, `../uploads/${i.user.id}`);
-                        await ensureDirectoryExists(userDir);
-                        const uniqueFilePath = getUniqueFileName(path.join(userDir, originalFileName));
-                        const uniqueFileName = path.basename(uniqueFilePath);
+                        const uniqueFileName = uuidv4() + path.extname(attachment.name);
+                        const filePath = path.join(__dirname, `../uploads/${i.user.id}`, uniqueFileName);
 
                         try {
                             // Check if the user already exists in the database
@@ -359,8 +349,6 @@ async function ancetFillPhotos(interaction) {
                                 await message.reply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
                                 return;
                             }
-                            userDB.photos = []
-                            await userDB.save()
 
                             // Create and save the photo document
                             const photo = new Photo({
@@ -369,6 +357,9 @@ async function ancetFillPhotos(interaction) {
                                 user: userDB._id,
                             });
 
+                            // Ensure the directory exists
+                            await ensureDirectoryExists(path.join(__dirname, `../uploads/${i.user.id}`));
+
                             // Download and save the file
                             const response = await axios({
                                 url: fileUrl,
@@ -376,19 +367,19 @@ async function ancetFillPhotos(interaction) {
                                 responseType: 'stream',
                             });
 
-                            response.data.pipe(fs.createWriteStream(uniqueFilePath));
+                            response.data.pipe(fs.createWriteStream(filePath));
                             response.data.on('end', async () => {
+                                uploadedFiles++;
+                                if (uploadedFiles > 3) {
+                                    messageCollector.stop();
+                                    await i.followUp('Вы загрузили максимальное количество файлов.');
+                                }else{
                                 await photo.save();
                                 userDB.photos.push(photo._id);
                                 await userDB.save();
 
-                                console.log(`Saved attachment: ${uniqueFilePath}`);
-                                await i.followUp(`Ваш файл ${originalFileName} успешно загружен и сохранен.`);
-
-                                uploadedFiles++;
-                                if (uploadedFiles >= 3) {
-                                    messageCollector.stop();
-                                    return i.followUp('Вы загрузили максимальное количество файлов.');
+                                console.log(`Saved attachment: ${filePath}`);
+                                await i.followUp(`Ваш файл ${attachment.name} успешно загружен и сохранен под именем ${uniqueFileName}.`);
                                 }
                             });
 
@@ -416,7 +407,7 @@ async function ancetFillPhotos(interaction) {
             await i.editReply({ content: 'Вы отменили загрузку фото/видео.', embeds: [], components: [] });
         }
     });
-};
+}
 
 async function ancetFillDescription(interaction) {
 // Create the modal
