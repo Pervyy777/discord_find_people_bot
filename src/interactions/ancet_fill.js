@@ -269,11 +269,25 @@ async function ancetSaveData(interaction, name, age, city, description) {
     return ancetFillPhotos(interaction);
 }
 
-
 async function ensureDirectoryExists(dirPath) {
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
     }
+}
+
+function getUniqueFileName(filePath) {
+    const dir = path.dirname(filePath);
+    const ext = path.extname(filePath);
+    const baseName = path.basename(filePath, ext);
+    let uniqueFilePath = filePath;
+    let counter = 1;
+
+    while (fs.existsSync(uniqueFilePath)) {
+        uniqueFilePath = path.join(dir, `${baseName}-${counter}${ext}`);
+        counter++;
+    }
+
+    return uniqueFilePath;
 }
 
 async function ancetFillPhotos(interaction) {
@@ -332,8 +346,11 @@ async function ancetFillPhotos(interaction) {
 
                     if (attachment.contentType.startsWith('image/') || (attachment.contentType.startsWith('video/') && attachment.size <= 15 * 1024 * 1024)) {
                         const fileUrl = attachment.url;
-                        const fileName = attachment.name;
-                        const filePath = path.join(__dirname, `../uploads/${i.user.id}`, fileName);
+                        const originalFileName = attachment.name;
+                        const userDir = path.join(__dirname, `../uploads/${i.user.id}`);
+                        await ensureDirectoryExists(userDir);
+                        const uniqueFilePath = getUniqueFileName(path.join(userDir, originalFileName));
+                        const uniqueFileName = path.basename(uniqueFilePath);
 
                         try {
                             // Check if the user already exists in the database
@@ -342,16 +359,15 @@ async function ancetFillPhotos(interaction) {
                                 await message.reply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
                                 return;
                             }
+                            userDB.photos = []
+                            await userDB.save()
 
                             // Create and save the photo document
                             const photo = new Photo({
-                                name: fileName,
+                                name: uniqueFileName,
                                 userDiscordId: interaction.user.id,
                                 user: userDB._id,
                             });
-
-                            // Ensure the directory exists
-                            await ensureDirectoryExists(path.join(__dirname, `../uploads/${i.user.id}`));
 
                             // Download and save the file
                             const response = await axios({
@@ -360,20 +376,19 @@ async function ancetFillPhotos(interaction) {
                                 responseType: 'stream',
                             });
 
-                            response.data.pipe(fs.createWriteStream(filePath));
+                            response.data.pipe(fs.createWriteStream(uniqueFilePath));
                             response.data.on('end', async () => {
                                 await photo.save();
-                                userDB.photos = []
                                 userDB.photos.push(photo._id);
                                 await userDB.save();
 
-                                console.log(`Saved attachment: ${filePath}`);
-                                await i.followUp(`Ваш файл ${fileName} успешно загружен и сохранен.`);
+                                console.log(`Saved attachment: ${uniqueFilePath}`);
+                                await i.followUp(`Ваш файл ${originalFileName} успешно загружен и сохранен.`);
 
                                 uploadedFiles++;
                                 if (uploadedFiles >= 3) {
                                     messageCollector.stop();
-                                    await i.followUp('Вы загрузили максимальное количество файлов.');
+                                    return i.followUp('Вы загрузили максимальное количество файлов.');
                                 }
                             });
 
