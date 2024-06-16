@@ -68,6 +68,33 @@ async function ancetFillModal(interaction) {
     // Show the modal to the user
     await interaction.showModal(modal);
 }
+// Функция для проверки наличия ссылок в тексте
+function containsURL(text) {
+    const urlRegex = /(http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)?[a-zA-Z0-9а-яА-ЯёЁ]+(\.[a-zA-Zа-яА-ЯёЁ]{2,})+(\S*)?/;
+    return urlRegex.test(text);
+}
+
+// список запрещенных слов
+const forbiddenWords = [
+    'докс',
+    'сват',
+    'деанон',
+    'нежелательное_слово1',
+    'нежелательное_слово2',
+    // Добавьте сюда другие запрещённые слова, которые вам нужны
+];
+
+// Функция для проверки наличия запрещённых слов в тексте
+function containsForbiddenWords(text) {
+    const lowercasedText = text.toLowerCase(); // Переводим текст в нижний регистр для учёта регистронезависимости
+
+    // Загружаем список запрещённых слов из JSON файла
+    const forbiddenWordsPath = path.join(__dirname, '../models/blackWords.json');
+    const forbiddenWords = JSON.parse(fs.readFileSync(forbiddenWordsPath, 'utf8'));
+
+    // Проверяем наличие запрещённых слов в тексте
+    return forbiddenWords.some(word => lowercasedText.includes(word));
+}
 
 async function ancetFillGender(interaction) {
     // Retrieve input values from the modal
@@ -85,6 +112,11 @@ async function ancetFillGender(interaction) {
         return interaction.reply({ content: 'Пожалуйста, введите корректный возраст.', ephemeral: true });
     }
 
+    // Проверка на наличие ссылок или запрещённых слов в тексте и отправка соответствующего сообщения
+    if (containsURL(name) || containsURL(description) || containsForbiddenWords(name) || containsForbiddenWords(description) || containsForbiddenWords(city) || containsURL(city)) {
+        return interaction.reply({ content: 'Текст содержит запрещённый контент.', ephemeral: true });
+    }
+
     const embedReply = new EmbedBuilder()
         .setColor(0x000000)
         .setTitle('Заполнение анкеты')
@@ -100,12 +132,7 @@ async function ancetFillGender(interaction) {
         .setLabel('Женский')
         .setStyle(ButtonStyle.Secondary);
 
-    const other = new ButtonBuilder()
-        .setCustomId('ancet_genderfill_other')
-        .setLabel('Другое')
-        .setStyle(ButtonStyle.Secondary);
-
-    const choseRow = new ActionRowBuilder().addComponents(male, female, other);
+    const choseRow = new ActionRowBuilder().addComponents(male, female);
 
     const channel = interaction.channel;
     await interaction.deferUpdate();
@@ -165,7 +192,7 @@ async function ancetFillInterestingGender(interaction, name, age, city, descript
 
     const other = new ButtonBuilder()
         .setCustomId(`ancet_interestinggenderfill_${gender}_other`)
-        .setLabel('Другое')
+        .setLabel('Не важно')
         .setStyle(ButtonStyle.Secondary);
 
     const choseRow = new ActionRowBuilder().addComponents(male, female, other);
@@ -451,4 +478,4 @@ async function ancetFillDescriptionData(interaction) {
 
 
 
-module.exports = { ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData };
+module.exports = { ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData, containsForbiddenWords };

@@ -2,6 +2,7 @@ const User = require("../models/user");
 const Like = require("../models/like");
 const Profile = require("../models/profile");
 const Verify = require("../models/verify");
+const {containsForbiddenWords} = require("./ancet_fill")
 const SEARCH = require("../utils/search");
 const LIKED_USERS = require("../utils/likedUsers");
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
@@ -28,7 +29,15 @@ async function ancetLookLike(interaction) {
 
         if (existingUserProfile && UserDB && existingUserUserDB) {
             if (!existingUserProfile.ratedUsers.includes(UserDB._id)) {
-            const message = interaction.fields.getTextInputValue('message');
+                
+            let message
+
+            try{message = interaction.fields.getTextInputValue('message');}catch(error){}
+            if(message)
+                
+            if (containsForbiddenWords(message)){
+                return interaction.reply('ваше сообщение не было отправленно из-за запрещенного контента'); 
+            }
             const likeDetails = {
                 userLiked: existingUserUserDB._id,
                 userWhoLiked: UserDB._id,
