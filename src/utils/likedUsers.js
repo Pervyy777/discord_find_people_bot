@@ -30,7 +30,7 @@ module.exports = async (interaction) => {
         const text = likeDB.message? `\n \nСообщение от пользователя: ${likeDB.message}` : ""
         const embedReply = new EmbedBuilder()
             .setColor(0x000000)
-            .setDescription(`${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}${text}`);
+            .setDescription(`Кому-то понравилась твоя анкета:\n\n${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}${text}`);
 
         const likeButton = new ButtonBuilder()
             .setCustomId(`ancetanswer_like_${likeDB._id}`)

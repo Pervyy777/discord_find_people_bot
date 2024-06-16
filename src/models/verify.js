@@ -15,7 +15,10 @@ const verifySchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Ban',
     },
-
+    banHistory: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Ban',
+    }],
 });
 
 const Verify = model('Verify', verifySchema);

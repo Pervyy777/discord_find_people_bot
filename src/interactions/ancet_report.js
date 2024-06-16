@@ -47,7 +47,7 @@ UserDB.liked = UserDB.liked.filter(function(item) {
 const text = likeDB.message? `\n \nСообщение от пользователя: ${likeDB.message}` : ""
             const embed = new EmbedBuilder()
             .setColor(0x000000)
-            .setDescription(`${existingUserUserDB.name}, ${existingUserUserDB.age}, ${existingUserUserDB.city} - ${existingUserUserDB.description}${text}\n\nreason: ${reason}\ndescription: ${description}`);
+            .setDescription(`${existingUserUserDB._id}, ${existingUserUserDB.name}, ${existingUserUserDB.age}, ${existingUserUserDB.city} - ${existingUserUserDB.description}\n\nreported:${UserDB._id}\nreason: ${reason}\ndescription: ${description}`);
 
             const ban = new ButtonBuilder()
                 .setCustomId(`ancetreport_ban_${newReport._id}`)
@@ -141,7 +141,7 @@ async function ancetLookReportModal(interaction) {
 
         const embed = new EmbedBuilder()
         .setColor(0x000000)
-        .setDescription(`${existingUserUserDB.name}, ${existingUserUserDB.age}, ${existingUserUserDB.city} - ${existingUserUserDB.description}\n\nreason: ${reason}\ndescription: ${description}`);
+        .setDescription(`${existingUserUserDB._id}, ${existingUserUserDB.name}, ${existingUserUserDB.age}, ${existingUserUserDB.city} - ${existingUserUserDB.description}\n\nreported:${UserDB._id}\nreason: ${reason}\ndescription: ${description}`);
 
         const ban = new ButtonBuilder()
             .setCustomId(`ancetreport_ban_${newReport._id}`)
@@ -258,6 +258,7 @@ await interaction.deferUpdate()
 
 
         verifyUsersDB.ban = newBan._id
+        verifyUsersDB.banHistory.push(newBan._id)
         await verifyUsersDB.save()
 
         await Profile.findByIdAndDelete(existingUserUserDB.profile)
