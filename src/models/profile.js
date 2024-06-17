@@ -7,6 +7,10 @@ const profileSchema = new Schema({
         required: true,
         unique: true,
     },
+    age: {
+        type: Number,
+        required: true,
+    },
     ratedUsers:[{
         type: Schema.Types.ObjectId,
         ref: 'User',

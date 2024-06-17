@@ -30,6 +30,10 @@ module.exports = async (interaction) => {
                 user: {$ne: userDB._id},
                 ratedUsers: {$ne: userDB._id},
                 interestingGender: { $not: genderRegex },
+                age: { 
+                    $gte: userDB.age - 4, 
+                    $lte: userDB.age + 2 
+                  },
                 ...matchConditions
             })
         };

@@ -19,6 +19,12 @@ const verifySchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Ban',
     }],
+    language: {
+        type: String,
+        enum: ['en', 'ru'],
+        required: true,
+        default: "ru",
+    },
 });
 
 const Verify = model('Verify', verifySchema);

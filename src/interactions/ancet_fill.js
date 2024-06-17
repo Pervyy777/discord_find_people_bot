@@ -74,16 +74,6 @@ function containsURL(text) {
     return urlRegex.test(text);
 }
 
-// список запрещенных слов
-const forbiddenWords = [
-    'докс',
-    'сват',
-    'деанон',
-    'нежелательное_слово1',
-    'нежелательное_слово2',
-    // Добавьте сюда другие запрещённые слова, которые вам нужны
-];
-
 // Функция для проверки наличия запрещённых слов в тексте
 function containsForbiddenWords(text) {
     const lowercasedText = text.toLowerCase(); // Переводим текст в нижний регистр для учёта регистронезависимости
@@ -108,7 +98,7 @@ async function ancetFillGender(interaction) {
         return interaction.reply({ content: 'Все поля обязательны для заполнения.', ephemeral: true });
     }
 
-    if (isNaN(age) || age <= 0) {
+    if (isNaN(age) || age <= 2 ) {
         return interaction.reply({ content: 'Пожалуйста, введите корректный возраст.', ephemeral: true });
     }
 
@@ -279,6 +269,7 @@ async function ancetSaveData(interaction, name, age, city, description) {
             const newProfile = new Profile({
                 user: user._id,         
                 gender,
+                age,
                 interestingGender,
                 ...(cityFound && { cityEn: cityFound.cityNameEn, country: cityFound.country }),
             })
