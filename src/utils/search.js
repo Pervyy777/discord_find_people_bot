@@ -18,17 +18,18 @@ module.exports = async (interaction) => {
 
         // Define an array of match conditions to try in order
         const matchConditionsList = [
-            {...genderMatch, interestingGender: userDB.gender, cityEn: userDB.cityEn},
-            {...genderMatch, interestingGender: userDB.gender, country: userDB.country},
-            {...genderMatch, interestingGender: userDB.gender}
+            {cityEn: userDB.cityEn, ...genderMatch},
+            {country: userDB.country, ...genderMatch},
+            {...genderMatch}
         ];
-
+        
         // Function to find profiles matching the user's preferences
         const findProfile = async (matchConditions) => {
-            
+            const genderRegex = userDB.gender === 'male' ? /female/ : /male/;
             return await Profile.findOne({
                 user: {$ne: userDB._id},
                 ratedUsers: {$ne: userDB._id},
+                interestingGender: { $not: genderRegex },
                 ...matchConditions
             })
         };
