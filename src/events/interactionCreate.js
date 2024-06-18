@@ -39,6 +39,7 @@ module.exports = {
                     const profileDetails = {
                         user: userDB._id,
                         gender: userDB.gender,
+                        age: userDB.age,
                         interestingGender: userDB.interestingGender,
                         ...(userDB.cityEn && { cityEn: userDB.cityEn, country: userDB.country }),
                     };
