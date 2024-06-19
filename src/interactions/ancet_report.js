@@ -235,43 +235,61 @@ return interaction.showModal(modal);
 
 async function ancetReportBanModal(interaction) {
     try {
+        // Check if user is an administrator
+        if (!interaction.member.permissions.has('ADMINISTRATOR')) {
+            await interaction.reply({
+                content: 'Only administrators can use this command.',
+                ephemeral: true  // Make the response ephemeral (only visible to the user who invoked)
+            });
+            return;
+        }
+
         const reportID = interaction.customId.split('_')[2];
         const time = interaction.fields.getTextInputValue('time');
         const rool = interaction.fields.getTextInputValue('rool');
 
         const reportDB = await Report.findOne({ _id: reportID });
-        const existingUserUserDB =  await User.findOne({ _id: reportDB.user });
-        const verifyUsersDB = await Verify.findOne({userDiscordId: existingUserUserDB.userDiscordId})
+        const existingUserUserDB = await User.findOne({ _id: reportDB.user });
+        const verifyUsersDB = await Verify.findOne({ userDiscordId: existingUserUserDB.userDiscordId });
 
-        if (existingUserUserDB, reportDB, !verifyUsersDB.ban ) {
-await interaction.deferUpdate()
-        const banDetails = {
-            userDiscordID: existingUserUserDB.userDiscordId,
-            dateUntil: new Date(Date.now() + time * 60 * 60 * 1000),
-            moderatorDiscordID: interaction.user.id,
-            report: reportDB._id,
-            reason: rool,
-        };
+        if (existingUserUserDB && reportDB && verifyUsersDB && !verifyUsersDB.ban) {
+            await interaction.deferUpdate();
 
-        const newBan = new Ban(banDetails);
-        await newBan.save(); 
+            const banDetails = {
+                userDiscordID: existingUserUserDB.userDiscordId,
+                dateUntil: new Date(Date.now() + time * 60 * 60 * 1000),
+                moderatorDiscordID: interaction.user.id,
+                report: reportDB._id,
+                reason: rool,
+            };
 
+            const newBan = new Ban(banDetails);
+            await newBan.save();
 
-        verifyUsersDB.ban = newBan._id
-        verifyUsersDB.banHistory.push(newBan._id)
-        await verifyUsersDB.save()
+            verifyUsersDB.ban = newBan._id;
+            verifyUsersDB.banHistory.push(newBan._id);
+            await verifyUsersDB.save();
 
-        await Profile.findByIdAndDelete(existingUserUserDB.profile)
+            await Profile.findByIdAndDelete(existingUserUserDB.profile);
+            existingUserUserDB.profile = null;
+            await existingUserUserDB.save();
 
-        existingUserUserDB.profile = null
-        await existingUserUserDB.save()
-        
-        return interaction.message.edit({
-            content:'Baned',
-            components:[]})
+            return interaction.message.edit({
+                content: 'User has been banned successfully.',
+                components: []
+            });
+        } else {
+            return interaction.reply({
+                content: 'Cannot ban user. Check if the user and report exist or if the user is already banned.',
+                ephemeral: true
+            });
         }
     } catch (error) {
         console.error('An error occurred:', error);
+        return interaction.reply({
+            content: 'An error occurred while processing your request.',
+            ephemeral: true
+        });
     }
 }
 
