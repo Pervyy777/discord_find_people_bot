@@ -7,8 +7,11 @@ const LIKED_USERS = require("../utils/likedUsers");
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
 const fetchPhotoFiles = require("../utils/takePhotos");
 
+const language = require('../utils/language');
+
 async function ancetAnswerLike(interaction) {
     try {
+        const lang = interaction.locale; 
         const likeID = interaction.customId.split('_')[2];
         const likeDB = await Like.findOne({ _id: likeID });
         const existingUserUserDB =  await User.findOne({ _id: likeDB.userWhoLiked });
@@ -36,8 +39,10 @@ async function ancetAnswerLike(interaction) {
 
 
             let text = existingUserUserDB.couple.length < 2 
-                ? `У тебя есть ${existingUserUserDB.couple.length} взаимная симпатия, показать её?` 
-                : `У тебя есть ${existingUserUserDB.couple.length} взаимные симпатии, показать их?`;
+                ? language.getLocalizedString(existingUserUserDB.language, 'mutualLikeSingle')
+                .replace('{count}', existingUserUserDB.couple.length) 
+                : language.getLocalizedString(existingUserUserDB.language, 'mutualLikeMultiple')
+                .replace('{count}', existingUserUserDB.couple.length);
 
             const embedReply = new EmbedBuilder()
                 .setColor(0x000000)
@@ -46,7 +51,7 @@ async function ancetAnswerLike(interaction) {
             const yes = new ButtonBuilder()
                 .setCustomId(`ancetanswer_yes`)
                 .setStyle(ButtonStyle.Primary)
-                .setLabel('Да');
+                .setLabel(language.getLocalizedString(existingUserUserDB.language, 'yes'));
 
             const choseRow = new ActionRowBuilder().addComponents(yes);
 
@@ -120,22 +125,24 @@ async function ancetAnswerDislike(interaction) {
 
 async function ancetAnswerReport(interaction) {
     try {
+        const lang = interaction.locale; 
         const likeID = interaction.customId.split('_')[2];
+
         // Create the modal
 const modal = new ModalBuilder()
 .setCustomId(`ancetanswer_report_${likeID}`)
-.setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
+.setTitle(language.getLocalizedString(lang, 'reportTitle'));
 
 // Add components to modal
 const reason = new TextInputBuilder()
 .setCustomId('reason')
-.setLabel("Введите причину жалобы")
+.setLabel(language.getLocalizedString(lang, 'reportReasonLabels'))
 .setStyle(TextInputStyle.Short)
 .setRequired(true);
 
 const descriptionInput = new TextInputBuilder()
 .setCustomId('description')
-.setLabel("Расскажите подробнее")
+.setLabel(language.getLocalizedString(lang, 'reportDescriptionLabel'))
 .setStyle(TextInputStyle.Paragraph)
 .setRequired(false);
 
@@ -157,11 +164,13 @@ return interaction.showModal(modal);
 
 async function ancetAnswerYes(interaction) {
     try {
+        const lang = interaction.locale; // Fetch the locale directly from interaction (assuming it's already available)
+
         const userDB = await User.findOne({ userDiscordId: interaction.user.id }).populate('couple');
 
         if (!userDB) {
             console.log('User not found');
-            return interaction.reply("Пользователь не найден");
+            return interaction.reply(language.getLocalizedString(lang, 'userNotFound'));
         }
 
         if (userDB.couple && userDB.couple.length > 0) {
@@ -190,11 +199,11 @@ async function ancetAnswerYes(interaction) {
             userDB.couple = []
             await userDB.save()
         } else {
-            return interaction.reply("У пользователя нет пар");
+            return interaction.reply(language.getLocalizedString(lang, 'noCouples'));
         }
     } catch (error) {
         console.error('An error occurred:', error);
-        return interaction.reply("Произошла ошибка при обработке запроса");
+        return interaction.reply(language.getLocalizedString(lang, 'errorProcessing'));
     }
 }
 

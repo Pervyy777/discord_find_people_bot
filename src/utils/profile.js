@@ -10,7 +10,7 @@ module.exports = async (interaction) => {
         // Check if the user already exists in the database
         const userDB = await User.findOne({userDiscordId: interaction.user.id});
         if (!userDB) {
-            await interaction.editReply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
+            await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
             return;
         }
 
@@ -22,17 +22,17 @@ module.exports = async (interaction) => {
         // Create buttons
         const request = new ButtonBuilder()
             .setCustomId('ancet_fill')
-            .setLabel('Заполнить анкету')
+            .setLabel(language.getLocalizedString(lang, 'fillTitleProfile'))
             .setStyle(ButtonStyle.Danger);
 
         const changePhoto = new ButtonBuilder()
             .setCustomId('ancet_photosfill')
-            .setLabel('Изменить фото/видео')
+            .setLabel(language.getLocalizedString(lang, 'changePhotosVideos'))
             .setStyle(ButtonStyle.Danger);
 
         const changeDescription = new ButtonBuilder()
             .setCustomId('ancet_descriptionfill')
-            .setLabel('Изменить описание')
+            .setLabel(language.getLocalizedString(lang, 'changeDescription'))
             .setStyle(ButtonStyle.Danger);
 
         const choseRow = new ActionRowBuilder().addComponents(request, changePhoto, changeDescription);
@@ -48,7 +48,7 @@ module.exports = async (interaction) => {
     } catch (error) {
         console.error('Error while processing the interaction:', error);
         try {
-            await interaction.editReply('Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз позже.');
+            await interaction.editReply(language.getLocalizedString(lang, 'errorProcessing'));
         } catch (editError) {
             console.error('Error while editing the reply:', editError);
         }

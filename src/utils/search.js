@@ -9,7 +9,7 @@ module.exports = async (interaction) => {
         else await interaction.deferUpdate();
         const userDB = await User.findOne({userDiscordId: interaction.user.id});
         if (!userDB) {
-            await interaction.editReply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
+            await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
             return;
         }
 
@@ -47,7 +47,7 @@ module.exports = async (interaction) => {
         if (!profile || !profile.user) {
             const embedReply = new EmbedBuilder()
                 .setColor(0x000000)
-                .setDescription("Не удалось найти подходящего пользователя.");
+                .setDescription(language.getLocalizedString(lang, 'noMatchingUser'));
 
             const options = {
                 embeds: [embedReply],
@@ -68,7 +68,7 @@ module.exports = async (interaction) => {
         const randomProfile = await User.findOne({_id: profile.user._id});
         if (!randomProfile) {
             console.error('Profile user not found:', profile.user);
-            await interaction.editReply('Произошла ошибка при поиске профиля пользователя. Пожалуйста, попробуйте еще раз позже.');
+            await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
             return;
         }
 
@@ -93,7 +93,7 @@ module.exports = async (interaction) => {
 
         const report = new ButtonBuilder()
             .setCustomId(`ancetlook_report_${profile._id}`)
-            .setLabel('Пожаловаться')
+            .setLabel(language.getLocalizedString(lang, 'report'))
             .setStyle(ButtonStyle.Danger)
             .setEmoji('⚠️');
 
@@ -116,7 +116,7 @@ module.exports = async (interaction) => {
     } catch (error) {
         console.error('Error while processing the interaction:', error);
         try {
-            await interaction.editReply('Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз позже.');
+            await interaction.editReply(language.getLocalizedString(lang, 'errorProcessing'));
         } catch (editError) {
             console.error('Error while editing the reply:', editError);
         }

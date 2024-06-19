@@ -1,18 +1,21 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle} = require('discord.js');
+const language = require('./language');
+
 
 module.exports = (interaction) => {
+    const lang = interaction.locale; 
     const embedReply = new EmbedBuilder()
         .setColor(0x000000)
-        .setTitle('Заполнение анкеты');
+        .setTitle(language.getLocalizedString(lang, 'formTitle'));
 
     const request = new ButtonBuilder()
         .setCustomId(`ancet_fill`)
-        .setLabel('Заполнить анкету')
+        .setLabel(language.getLocalizedString(lang, 'fillTitleProfile'))
         .setStyle(ButtonStyle.Danger);
 
     const choseRow = new ActionRowBuilder().addComponents(request);
 
-    embedReply.setDescription(`заполните анкету для взаимодействия с ботом`);
+    embedReply.setDescription(language.getLocalizedString(lang, 'fillDescriptionProfile'));
 
     // Отправляем сообщение только если оно пришло из нужного канала
     return interaction.reply({ embeds: [ embedReply], components: [choseRow], fetchReply: true })

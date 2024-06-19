@@ -65,7 +65,12 @@ const userSchema = new Schema({
     couple: [{
         type: Schema.Types.ObjectId,
         ref: 'User',
-    }]
+    }],
+    language: {
+        type: String,
+        required: true,
+        default: "en",
+    }
 });
 
 const User = model('User', userSchema);

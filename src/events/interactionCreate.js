@@ -12,18 +12,27 @@ const Profile  = require('../models/profile');
 const {ancetAnswerReportModal, ancetLookReportModal, ancetReportBanModal, ancetReportBan } = require('../interactions/ancet_report')
 const Verify  = require('../models/verify');
 const Ban  = require('../models/ban');
+
+const language = require('../utils/language'); // Adjust the path based on your project structure
+
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
         log("i", "interactionCreate");
         try {
+            const lang = interaction.locale; // Fetch the locale directly from interaction (assuming it's already available)
+
             const verifyDB = await Verify.findOne({userDiscordId: interaction.user.id})
             if (verifyDB && !!verifyDB.ban) {
                 const banDB = await Verify.findOne({ userDiscordId: interaction.user.id });
                 if (banDB) {
+                    const reason = banDB.reason || 'No reason specified';
+                    const dateUntil = banDB.dateUntil || 'Unknown';
                     return interaction.reply({
-                        content: `Вы были огранчены по причине ${banDB.reason} до ${banDB.dateUntil}.`,
-                        ephemeral: true
+                      content: language.getLocalizedString(lang, 'banMessage')
+                        .replace('{reason}', reason)
+                        .replace('{dateUntil}', dateUntil),
+                      ephemeral: true
                     });
                 }
             }
@@ -31,7 +40,7 @@ module.exports = {
 
             if (userDB) {
                 userDB.lastActivity = Date.now();
-            
+                userDB.language = interaction.locale;
                 // Find user profile by user id
                 const userProfile = await Profile.findOne({ _id: userDB.profile });
 
@@ -67,9 +76,9 @@ module.exports = {
                 } catch (error) {
                     console.error(error);
                     await interaction.reply({
-                        content: 'There was an error while executing this command!',
+                        content: language.getLocalizedString(lang, 'error'),
                         ephemeral: true
-                    });
+                      });
                 }
             } else if (interaction.isButton()) {
                 log('i', 'Button interaction detected:', interaction.customId);
@@ -78,7 +87,7 @@ module.exports = {
                 if(userChoice !== 'yesantwort' && userChoice !== 'nomoresearch' && chose !== 'ancetanswer' && chose !== "ancetreport"){
                     // Check if the user interacting with the buttons is the same as the sender
                     if (interaction.user.id !== interaction.message.interaction.user.id) {
-                        return interaction.reply({content: 'Вы не являетесь отправителем этой операции.', ephemeral: true});
+                        await interaction.reply({ content: language.getLocalizedString(lang, 'notSender'), ephemeral: true });
                     }
                 }
 
@@ -201,6 +210,7 @@ module.exports = {
             }
         } catch (error) {
             console.error(error);
+            await interaction.reply({ content: language.getLocalizedString(lang, 'interactionError'), ephemeral: true });
             await interaction.reply({content: 'There was an error while interaction!', ephemeral: true});
         }
     },

@@ -12,20 +12,6 @@ module.exports = {
         try {
             // Проверяем, находимся ли мы на сервере с нужным идентификатором
             if (client.guilds.cache.has(process.env.SERVER_ID)) {
-                const members = await guild.members.fetch();
-
-                for (const [_, member] of members) {
-                    if (!member.user.bot) {
-                        const existingUser = await User.findOne({ userDiscordId: member.id });
-
-                        if (!existingUser) {
-                            // Если пользователь не зарегистрирован, даем ему роль unverify
-                            if(member.roles.cache.has(process.env.ROLE_UNVERIFY_ID)) {
-                                await member.roles.add(process.env.ROLE_UNVERIFY_ID);
-                            }
-                        }
-                    }
-                }
 
                 log('i','All users registered successfully!');
             } else {

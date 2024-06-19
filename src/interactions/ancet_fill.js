@@ -8,6 +8,7 @@ const path = require('path');
 const Photo = require('../models/photo');
 const Profile = require('../models/profile');
 const { v4: uuidv4 } = require('uuid');
+const language = require('../utils/language');
 
 async function createUser(userDetails) {
     try {
@@ -26,35 +27,37 @@ async function createUser(userDetails) {
 }
 
 async function ancetFillModal(interaction) {
-    // Create the modal
-    const modal = new ModalBuilder()
-        .setCustomId('ancet_datafill')
-        .setTitle('ЗАПОЛНЕНИЕ АНКЕТЫ');
+    const lang = interaction.locale; 
 
-    // Add components to modal
-    const nameInput = new TextInputBuilder()
-        .setCustomId('nameInput')
-        .setLabel("Введите ваше имя")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true);
+      // Create the modal
+      const modal = new ModalBuilder()
+          .setCustomId('ancet_datafill')
+          .setTitle(language.getLocalizedString(lang, 'modalTitle'));
 
-    const ageInput = new TextInputBuilder()
-        .setCustomId('ageInput')
-        .setLabel("Введите ваш возраст")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true);
+      // Add components to modal
+      const nameInput = new TextInputBuilder()
+          .setCustomId('nameInput')
+          .setLabel(language.getLocalizedString(lang, 'nameLabel'))
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
 
-    const cityInput = new TextInputBuilder()
-        .setCustomId('cityInput')
-        .setLabel("Введите ваш город")
-        .setStyle(TextInputStyle.Short)
-        .setRequired(true);
+      const ageInput = new TextInputBuilder()
+          .setCustomId('ageInput')
+          .setLabel(language.getLocalizedString(lang, 'ageLabel'))
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
 
-    const descriptionInput = new TextInputBuilder()
-        .setCustomId('descriptionInput')
-        .setLabel("Расскажите про себя")
-        .setStyle(TextInputStyle.Paragraph)
-        .setRequired(false);
+      const cityInput = new TextInputBuilder()
+          .setCustomId('cityInput')
+          .setLabel(language.getLocalizedString(lang, 'cityLabel'))
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+
+      const descriptionInput = new TextInputBuilder()
+          .setCustomId('descriptionInput')
+          .setLabel(language.getLocalizedString(lang, 'descriptionLabel'))
+          .setStyle(TextInputStyle.Paragraph)
+          .setRequired(false);
 
     // An action row only holds one text input,
     const actionRow1 = new ActionRowBuilder().addComponents(nameInput);
@@ -87,39 +90,40 @@ function containsForbiddenWords(text) {
 }
 
 async function ancetFillGender(interaction) {
+    const lang = interaction.locale; 
     // Retrieve input values from the modal
     const name = interaction.fields.getTextInputValue('nameInput');
     const age = interaction.fields.getTextInputValue('ageInput');
     const city = interaction.fields.getTextInputValue('cityInput');
     const description = interaction.fields.getTextInputValue('descriptionInput');
 
-    // Validate inputs
-    if (!name || !age || !city) {
-        return interaction.reply({ content: 'Все поля обязательны для заполнения.', ephemeral: true });
-    }
+     // Validate inputs
+     if (!name || !age || !city) {
+        return interaction.reply({ content: language.getLocalizedString(lang, 'allFieldsRequired'), ephemeral: true });
+      }
 
-    if (isNaN(age) || age <= 2 ) {
-        return interaction.reply({ content: 'Пожалуйста, введите корректный возраст.', ephemeral: true });
-    }
+      if (isNaN(age) || age <= 2) {
+        return interaction.reply({ content: language.getLocalizedString(lang, 'invalidAge'), ephemeral: true });
+      }
 
-    // Проверка на наличие ссылок или запрещённых слов в тексте и отправка соответствующего сообщения
-    if (containsURL(name) || containsURL(description) || containsForbiddenWords(name) || containsForbiddenWords(description) || containsForbiddenWords(city) || containsURL(city)) {
-        return interaction.reply({ content: 'Текст содержит запрещённый контент.', ephemeral: true });
-    }
+      // Проверка на наличие ссылок или запрещённых слов в тексте и отправка соответствующего сообщения
+      if (containsURL(name) || containsURL(description) || containsForbiddenWords(name) || containsForbiddenWords(description) || containsForbiddenWords(city) || containsURL(city)) {
+        return interaction.reply({ content: language.getLocalizedString(lang, 'contentNotAllowed'), ephemeral: true });
+      }
 
-    const embedReply = new EmbedBuilder()
+      const embedReply = new EmbedBuilder()
         .setColor(0x000000)
-        .setTitle('Заполнение анкеты')
-        .setDescription('Выберите ваш пол');
+        .setTitle(language.getLocalizedString(lang, 'formTitle'))
+        .setDescription(language.getLocalizedString(lang, 'selectGender'));
 
-    const male = new ButtonBuilder()
+      const male = new ButtonBuilder()
         .setCustomId('ancet_genderfill_male')
-        .setLabel('Мужской')
+        .setLabel(language.getLocalizedString(lang, 'male'))
         .setStyle(ButtonStyle.Secondary);
 
-    const female = new ButtonBuilder()
+      const female = new ButtonBuilder()
         .setCustomId('ancet_genderfill_female')
-        .setLabel('Женский')
+        .setLabel(language.getLocalizedString(lang, 'female'))
         .setStyle(ButtonStyle.Secondary);
 
     const choseRow = new ActionRowBuilder().addComponents(male, female);
@@ -151,7 +155,7 @@ async function ancetFillGender(interaction) {
             // Проверка, является ли пользователь, взаимодействующий с кнопками, тем же самым отправителем
             if (interaction.isButton()) {
                 if (interaction.user.id !== interaction.message.interaction.user.id) {
-                    return interaction.reply({ content: 'Вы не отправитель этой операции.', ephemeral: true });
+                    return interaction.reply({ content: language.getLocalizedString(lang, 'notSender'), ephemeral: true });
                 }
 
                     return ancetFillInterestingGender(interaction, name, age,city, description);
@@ -163,26 +167,26 @@ async function ancetFillGender(interaction) {
 
 async function ancetFillInterestingGender(interaction, name, age, city, description) {
     const gender = interaction.customId.split('_')[2];
-
+    const lang = interaction.locale; 
 
     const embedReply = new EmbedBuilder()
         .setColor(0x000000)
-        .setTitle('Заполнение анкеты')
-        .setDescription('Выберите кого хотите найти');
+        .setTitle(language.getLocalizedString(lang, 'formTitle'))
+        .setDescription(language.getLocalizedString(lang, 'selectWhoToFind'));
 
     const male = new ButtonBuilder()
         .setCustomId(`ancet_interestinggenderfill_${gender}_male`)
-        .setLabel('Мужской')
+        .setLabel(language.getLocalizedString(lang, 'male'))
         .setStyle(ButtonStyle.Secondary);
 
     const female = new ButtonBuilder()
         .setCustomId(`ancet_interestinggenderfill_${gender}_female`)
-        .setLabel('Женский')
+        .setLabel(language.getLocalizedString(lang, 'female'))
         .setStyle(ButtonStyle.Secondary);
 
     const other = new ButtonBuilder()
         .setCustomId(`ancet_interestinggenderfill_${gender}_other`)
-        .setLabel('Не важно')
+        .setLabel(language.getLocalizedString(lang, 'doesNotMatter'))
         .setStyle(ButtonStyle.Secondary);
 
     const choseRow = new ActionRowBuilder().addComponents(male, female, other);
@@ -214,7 +218,7 @@ async function ancetFillInterestingGender(interaction, name, age, city, descript
             // Проверка, является ли пользователь, взаимодействующий с кнопками, тем же самым отправителем
             if (interaction.isButton()) {
                 if (interaction.user.id !== interaction.message.interaction.user.id) {
-                    return interaction.reply({ content: 'Вы не отправитель этой операции.', ephemeral: true });
+                    return interaction.reply({ content: language.getLocalizedString(lang, 'notSender'), ephemeral: true });
                 }
 
                 return ancetSaveData(interaction, name, age, city, description);
@@ -236,6 +240,7 @@ async function ancetSaveData(interaction, name, age, city, description) {
         city,
         description,
         gender,
+        language: interaction.locale,
         interestingGender,
         ...(cityFound && { cityEn: cityFound.cityNameEn, country: cityFound.country }),
     };
@@ -295,19 +300,20 @@ async function ensureDirectoryExists(dirPath) {
 }
 
 async function ancetFillPhotos(interaction) {
+    const lang = interaction.locale; 
     const embedReply = new EmbedBuilder()
         .setColor(0x000000)
-        .setTitle('Заполнение анкеты')
-        .setDescription('Вы хотите загрузить ваши фото/видео?');
+        .setTitle(language.getLocalizedString(lang, 'formTitle'))
+        .setDescription(language.getLocalizedString(lang, 'uploadPhotosVideos'));
 
     const confirmButton = new ButtonBuilder()
         .setCustomId('ancet_photos_upload')
-        .setLabel('Да')
+        .setLabel(language.getLocalizedString(lang, 'yes'))
         .setStyle(ButtonStyle.Secondary);
 
     const cancelButton = new ButtonBuilder()
         .setCustomId('ancet_photos_cancel')
-        .setLabel('Нет')
+        .setLabel(language.getLocalizedString(lang, 'no'))
         .setStyle(ButtonStyle.Secondary);
 
     const choseRow = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
@@ -327,8 +333,8 @@ async function ancetFillPhotos(interaction) {
             await i.deferUpdate();
             const uploadEmbed = new EmbedBuilder()
                 .setColor(0x000000)
-                .setTitle('Загрузите ваши фото/видео')
-                .setDescription('Пожалуйста, отправьте ваши фото или видео до 15 секунд (максимум 3 файла) в течение 3 минут.');
+                .setTitle(language.getLocalizedString(lang, 'uploadPhotosVideosTitle'))
+                .setDescription(language.getLocalizedString(lang, 'uploadPhotosVideosDescription'));
 
             await i.editReply({ embeds: [uploadEmbed], components: [] });
 
@@ -348,7 +354,7 @@ async function ancetFillPhotos(interaction) {
                 const attachments = message.attachments;
 
                 if (uploadedFiles >= 3) {
-                    await message.reply('Вы уже загрузили максимальное количество файлов.');
+                    await message.reply(language.getLocalizedString(lang, 'maxFilesUploaded'));
                     return;
                 }
 
@@ -364,7 +370,7 @@ async function ancetFillPhotos(interaction) {
                             // Check if the user already exists in the database
                             const userDB = await User.findOne({ userDiscordId: interaction.user.id });
                             if (!userDB) {
-                                await message.reply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
+                                await message.reply(language.getLocalizedString(lang, 'userNotFound'));
                                 return;
                             }
 
@@ -390,52 +396,52 @@ async function ancetFillPhotos(interaction) {
                                 uploadedFiles++;
                                 if (uploadedFiles > 3) {
                                     messageCollector.stop();
-                                    await i.followUp('Вы загрузили максимальное количество файлов.');
+                                    await i.followUp(language.getLocalizedString(lang, 'maxFilesUploaded'));
                                 }else{
                                 await photo.save();
                                 userDB.photos.push(photo._id);
                                 await userDB.save();
 
                                 console.log(`Saved attachment: ${filePath}`);
-                                await i.followUp(`Ваш файл ${attachment.name} успешно загружен и сохранен под именем ${uniqueFileName}.`);
                                 }
                             });
 
                             response.data.on('error', (err) => {
                                 console.error('Error downloading the file:', err);
-                                message.reply('Произошла ошибка при сохранении файла.');
+                                message.reply(language.getLocalizedString(lang, 'fileSaveError'));
                             });
                         } catch (error) {
                             console.error('Error fetching the file:', error);
-                            await message.reply('Произошла ошибка при загрузке файла.');
+                            await message.reply(language.getLocalizedString(lang, 'fileUploadError'));
                         }
                     } else {
-                        await message.reply('Ваш файл не подходит по требованиям. Пожалуйста, отправьте фото или видео до 15 секунд.');
+                        await message.reply(language.getLocalizedString(lang, 'fileRequirementsError'));
                     }
                 }
             });
 
             messageCollector.on('end', (collected) => {
                 if (collected.size === 0) {
-                    i.followUp('Вы не загрузили фото или видео вовремя.');
+                    i.followUp(language.getLocalizedString(lang, 'fileUploadTimeout'));
                 }
             });
         } else if (i.customId === 'ancet_photos_cancel') {
             await i.deferUpdate();
-            await i.editReply({ content: 'Вы отменили загрузку фото/видео.', embeds: [], components: [] });
+            await i.editReply({ content: language.getLocalizedString(lang, 'fileUploadCancelled'), embeds: [], components: [] });
         }
     });
 }
 
 async function ancetFillDescription(interaction) {
+    const lang = interaction.locale; 
 // Create the modal
     const modal = new ModalBuilder()
         .setCustomId('ancet_descriptionfilldata')
-        .setTitle('ЗАПОЛНЕНИЕ ОПИСАНИЯ');
+        .setTitle(language.getLocalizedString(lang, 'modalDescriptionTitle'));
 
     const descriptionInput = new TextInputBuilder()
         .setCustomId('descriptionInput')
-        .setLabel("Расскажите про себя")
+        .setLabel(language.getLocalizedString(lang, 'descriptionLabel'))
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(false);
 

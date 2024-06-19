@@ -8,9 +8,11 @@ const LIKED_USERS = require("../utils/likedUsers");
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
 const fetchPhotoFiles = require("../utils/takePhotos");
 
+const language = require('../utils/language');
+
 async function ancetLookLike(interaction) {
     try {
-        console.log(interaction.customId)
+        const lang = interaction.locale; 
         const profileID = interaction.customId.split('_')[2];
 
         const existingUserProfile = await Profile.findOne({ _id: profileID });
@@ -36,7 +38,7 @@ async function ancetLookLike(interaction) {
             if(message)
                 
             if (containsForbiddenWords(message)){
-                return interaction.reply('ваше сообщение не было отправленно из-за запрещенного контента'); 
+                return interaction.reply(language.getLocalizedString(lang, 'contentNotAllowed')); 
             }
             const likeDetails = {
                 userLiked: existingUserUserDB._id,
@@ -54,8 +56,10 @@ async function ancetLookLike(interaction) {
             await existingUserProfile.save();
 
             let text = existingUserUserDB.liked.length == 1 
-                ? `Ты понравился ${existingUserUserDB.liked.length} пользователю, показать его?` 
-                : `Ты понравился ${existingUserUserDB.liked.length} пользователям, показать их?`;
+                ? language.getLocalizedString(existingUserUserDB.language, 'likedUserSingular')
+                .replace('{count}', existingUserUserDB.liked.length) 
+                : language.getLocalizedString(existingUserUserDB.language, 'likedUserPlural')
+                .replace('{count}', existingUserUserDB.liked.length) ;
 
             const embedReply = new EmbedBuilder()
                 .setColor(0x000000)
@@ -64,12 +68,12 @@ async function ancetLookLike(interaction) {
             const yes = new ButtonBuilder()
                 .setCustomId(`ancetlook_yesantwort`)
                 .setStyle(ButtonStyle.Primary)
-                .setLabel('Да');
+                .setLabel(language.getLocalizedString(existingUserUserDB.language, 'yes'));
 
             const stopSearch = new ButtonBuilder()
                 .setCustomId(`ancetlook_nomoresearch`)
                 .setStyle(ButtonStyle.Danger)
-                .setLabel('Я больше не ищу');
+                .setLabel(language.getLocalizedString(existingUserUserDB.language, 'noMoreSearch'));
 
             const choseRow = new ActionRowBuilder().addComponents(yes, stopSearch);
 
@@ -149,22 +153,23 @@ async function ancetLookDislike(interaction) {
 
 async function ancetLookReport(interaction) {
     try {
+        const lang = interaction.locale; 
         const profileID = interaction.customId.split('_')[2];
             // Create the modal
     const modal = new ModalBuilder()
     .setCustomId(`ancetlook_report_${profileID}`)
-    .setTitle('ЗАПОЛНЕНИЕ ЖАЛОБЫ');
+    .setTitle(language.getLocalizedString(lang, 'reportTitle'));
 
 // Add components to modal
 const reason = new TextInputBuilder()
     .setCustomId('reason')
-    .setLabel("Введите причину жалобы")
+    .setLabel(language.getLocalizedString(lang, 'reportReasonLabels'))
     .setStyle(TextInputStyle.Short)
     .setRequired(true);
 
 const descriptionInput = new TextInputBuilder()
     .setCustomId('description')
-    .setLabel("Расскажите подробнее")
+    .setLabel(language.getLocalizedString(lang, 'reportDescriptionLabel'))
     .setStyle(TextInputStyle.Paragraph)
     .setRequired(false);
 
@@ -188,6 +193,7 @@ async function ancetLookYesantwort(interaction) {
 }
 
 async function ancetLookNoMoreSearch(interaction) {
+    const lang = interaction.locale; 
     // Check if the user already exists in the database
     const existingUser = await User.findOne({ userDiscordId: interaction.user.id });
 
@@ -200,16 +206,17 @@ async function ancetLookNoMoreSearch(interaction) {
 
 async function ancetLookMessage(interaction) {
     try {
+        const lang = interaction.locale; 
         const profileID = interaction.customId.split('_')[2];
             // Create the modal
     const modal = new ModalBuilder()
     .setCustomId(`ancetlook_message_${profileID}`)
-    .setTitle('СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЮ');
+    .setTitle(language.getLocalizedString(lang, 'userMessage'));
 
 // Add components to modal
 const message = new TextInputBuilder()
     .setCustomId('message')
-    .setLabel("Введите ваше сообщение пользователю")
+    .setLabel(language.getLocalizedString(lang, 'enterMessage'))
     .setStyle(TextInputStyle.Paragraph)
     .setRequired(true);
 

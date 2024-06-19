@@ -8,7 +8,7 @@ module.exports = async (interaction) => {
     try {
         const userDB = await User.findOne({ userDiscordId: interaction.user.id });
         if (!userDB) {
-            await interaction.editReply('Ваша анкета не была найдена, пожалуйста заполните анкету заново.');
+            await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
             return;
         }
 
@@ -24,13 +24,13 @@ module.exports = async (interaction) => {
         const likedUser = await User.findById(likeDB.userWhoLiked);
         if (!likedUser) {
             console.error('Profile user not found');
-            await interaction.editReply('Произошла ошибка при поиске профиля пользователя. Пожалуйста, попробуйте еще раз позже.');
+            await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
             return;
         }
-        const text = likeDB.message? `\n \nСообщение от пользователя: ${likeDB.message}` : ""
+        const text = likeDB.message? language.getLocalizedString(lang, 'userMessageText').replace('${likeDB.message}', likeDB.message) : ""
         const embedReply = new EmbedBuilder()
             .setColor(0x000000)
-            .setDescription(`Кому-то понравилась твоя анкета:\n\n${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}${text}`);
+            .setDescription(language.getLocalizedString(lang, 'likedYourProfile') + `\n\n${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}${text}`);
 
         const likeButton = new ButtonBuilder()
             .setCustomId(`ancetanswer_like_${likeDB._id}`)
@@ -44,7 +44,7 @@ module.exports = async (interaction) => {
 
         const reportButton = new ButtonBuilder()
             .setCustomId(`ancetanswer_report_${likeDB._id}`)
-            .setLabel('Пожаловаться')
+            .setLabel(language.getLocalizedString(lang, 'report'))
             .setStyle(ButtonStyle.Danger)
             .setEmoji('⚠️');
 
@@ -62,7 +62,7 @@ module.exports = async (interaction) => {
     } catch (error) {
         console.error('Error while processing the interaction:', error);
         try {
-            await interaction.editReply('Произошла ошибка при обработке вашего запроса. Пожалуйста, попробуйте еще раз позже.');
+            await interaction.editReply(language.getLocalizedString(lang, 'errorProcessing'));
         } catch (editError) {
             console.error('Error while editing the reply:', editError);
         }
