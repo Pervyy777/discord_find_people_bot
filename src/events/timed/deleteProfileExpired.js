@@ -16,7 +16,7 @@ module.exports = async function (client) {
         const expiredProfiles = await Profile.find({ lastActivity: { $lte: weekAgo } });
 
         for (const expiredProfile of expiredProfiles) {
-            const userDb = await User.find({ profile: expiredProfile._id });
+            const userDb = await User.findOne({ profile: expiredProfile._id });
             if (userDb.length === 0) {
                 console.error('No users found for expired profile:', expiredProfile._id);
             }else{
@@ -25,6 +25,7 @@ module.exports = async function (client) {
 
             // Delete the expired profile
             await Profile.deleteOne({ _id: expiredProfile._id });
+            await userDb.save()
         }
         log('i',`Expired ${expiredProfiles.length} profiles deleted.`);
     } catch (error) {
