@@ -18,6 +18,11 @@ const photoSchema = new Schema({
         ref: 'User',
         required: true,
     },
+    activ: {
+        type: Boolean,
+        required: true,
+        default: true
+    },
 });
 
 const Photo = model('Photo', photoSchema);

@@ -346,6 +346,11 @@ async function ancetFillPhotos(interaction) {
                         // Clear the user's photos array
                         const userDB = await User.findOne({ userDiscordId: interaction.user.id });
                         if (userDB) {
+                            userDB.photos.forEach(async (photo) => {
+                                const photoDB = await Photo.findById(photo);
+                                photoDB.activ = false;
+                                await photoDB.save()
+                            })
                             userDB.photos = [];
                             await userDB.save();
                         }
