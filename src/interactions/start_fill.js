@@ -34,14 +34,12 @@ async function fillPromoCode(interaction) {
       // Create the modal
       const modal = new ModalBuilder()
           .setCustomId('promo_check')
-          .setTitle("ss")
-         // .setTitle(language.getLocalizedString(lang, 'promoCodeModalTitle'));
+          .setTitle(language.getLocalizedString(lang, 'promoCodeModalTitle'));
 
       // Add components to modal
       const promoCodeInput = new TextInputBuilder()
           .setCustomId('promoCodeInput')
-          .setLabel("ss")
-          //.setLabel(language.getLocalizedString(lang, 'promoCodeLabel'))
+          .setLabel(language.getLocalizedString(lang, 'promoCodeLabel'))
           .setStyle(TextInputStyle.Short)
           .setRequired(true);
 
@@ -59,16 +57,14 @@ async function fillPromoCode(interaction) {
 async function checkPromoCodeButtons(interaction) {
     const promoCode = interaction.fields.getTextInputValue('promoCodeInput');
     const lang = interaction.locale; 
+    const embedError = new EmbedBuilder()
+        .setColor(0xFF0000)
+        .setTitle(language.getLocalizedString(lang, 'invalidPromoCodeTitle'))
+        .setDescription(language.getLocalizedString(lang, 'invalidPromoCodeDescription').replace('{promoCode}', promoCode));
 
     // Validate the promo code
     const isValidPromoCode = /^[A-Z0-9]{5}$/.test(promoCode);
-
     if (!isValidPromoCode) {
-        const embedError = new EmbedBuilder()
-            .setColor(0xFF0000)
-            .setTitle(language.getLocalizedString(lang, 'invalidPromoCodeTitle'))
-            .setDescription(language.getLocalizedString(lang, 'invalidPromoCodeDescription'));
-
         await interaction.reply({
             embeds: [embedError],
             ephemeral: true
@@ -78,12 +74,6 @@ async function checkPromoCodeButtons(interaction) {
 
     const promoCodeDB = await PromoCode.findOne({code: promoCode})
     if(!promoCodeDB) {
-    const lang = interaction.locale; 
-    const embedError = new EmbedBuilder()
-        .setColor(0xFF0000)
-        .setTitle(language.getLocalizedString(lang, 'invalidPromoCodeTitle'))
-        .setDescription(language.getLocalizedString(lang, 'invalidPromoCodeDescription'));
-
     await interaction.reply({
         embeds: [embedError],
         ephemeral: true
@@ -96,7 +86,7 @@ async function checkPromoCodeButtons(interaction) {
     const embedReply = new EmbedBuilder()
         .setColor(0x000000)
         .setTitle(language.getLocalizedString(lang, 'checkPromoTitle'))
-        .setDescription(language.getLocalizedString(lang, 'checkPromoAsk'));
+        .setDescription(language.getLocalizedString(lang, 'checkPromoAsk').replace('{promoCode}', promoCode));
 
     const confirmButton = new ButtonBuilder()
         .setCustomId(`ancet_fill_${promoCode}`)
