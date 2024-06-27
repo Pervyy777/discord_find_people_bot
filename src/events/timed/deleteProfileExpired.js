@@ -2,33 +2,29 @@ const Profile = require('../../models/profile');
 const User = require('../../models/user');
 const log = require("../../utils/debugLog");
 
-module.exports = async function (client) {
+module.exports = async function () {
     try {
-        const guild = await client.guilds.fetch(process.env.SERVER_ID);
-        if (!guild) {
-            console.error('Guild not found');
-            return;
-        }
-
         const weekAgo = new Date();
         weekAgo.setDate(weekAgo.getDate() - 7);
 
         const expiredProfiles = await Profile.find({ lastActivity: { $lte: weekAgo } });
 
         for (const expiredProfile of expiredProfiles) {
-            const userDb = await User.findOne({ profile: expiredProfile._id });
+            const userDb = await User.findById(expiredProfile.user);
             if (userDb.length === 0) {
-                console.error('No users found for expired profile:', expiredProfile._id);
+                log("w",'No users found for expired profile:', expiredProfile._id);
             }else{
-                userDb.profile = null;
+                await User.updateOne(
+                    { _id: userDb._id },  // Replace with the appropriate user identifier
+                    { $unset: { profile: "" } }
+                 )
             }
 
             // Delete the expired profile
             await Profile.deleteOne({ _id: expiredProfile._id });
-            await userDb.save()
         }
         log('i',`Expired ${expiredProfiles.length} profiles deleted.`);
     } catch (error) {
-        console.error('Error deleting profiles:', error);
+        log("e",'Error deleting profiles:', error);
     }
 };

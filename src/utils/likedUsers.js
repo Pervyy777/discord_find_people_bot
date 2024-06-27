@@ -3,8 +3,11 @@ const User = require("../models/user");
 const Like = require("../models/like");
 const SEARCH = require("./search");
 const fetchPhotoFiles = require('./takePhotos');
+const log = require('./debugLog.js');
+const language = require('./language');
 
 module.exports = async (interaction) => {
+    const lang = interaction.locale; 
     try {
         const userDB = await User.findOne({ userDiscordId: interaction.user.id });
         if (!userDB) {
@@ -14,20 +17,34 @@ module.exports = async (interaction) => {
 
         if (!userDB.liked || userDB.liked.length === 0) {
             return SEARCH(interaction)
-
         }
 
         if (!interaction.message)await interaction.deferReply();
         else await interaction.deferUpdate();
+        
+        let likeDB
+        let likedUser
+        for (let i = 0; i < userDB.liked.length; i++) {
+            likeDB = await Like.findById(userDB.liked[i])
 
-        const likeDB = await Like.findById(userDB.liked[0])
-        const likedUser = await User.findById(likeDB.userWhoLiked);
+            if (!likeDB) { // Условие проверки
+                await userDB.updateOne(
+                    { _id: userDB._id },
+                    { $pull: { liked: userDB.liked[i] } }
+                 )
+            }else {
+                likedUser = await User.findById(likeDB.userWhoLiked);
+                if(likedUser) break;
+            };
+        }
+
         if (!likedUser) {
-            console.error('Profile user not found');
+            log("w",'Liked user not found', likeDB.userWhoLiked);
             await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
             return;
         }
-        const text = likeDB.message? language.getLocalizedString(lang, 'userMessageText').replace('${likeDB.message}', likeDB.message) : ""
+
+        const text = likeDB.message? language.getLocalizedString(lang, 'userMessageText').replace('{message}', likeDB.message) : ""
         const embedReply = new EmbedBuilder()
             .setColor(0x000000)
             .setDescription(language.getLocalizedString(lang, 'likedYourProfile') + `\n\n${likedUser.name}, ${likedUser.age}, ${likedUser.city} - ${likedUser.description}${text}`);
@@ -60,11 +77,11 @@ module.exports = async (interaction) => {
         };
         await interaction.message.edit(replyOptions);
     } catch (error) {
-        console.error('Error while processing the interaction:', error);
+        log("e",'Error while processing the interaction:', error);
         try {
             await interaction.editReply(language.getLocalizedString(lang, 'errorProcessing'));
         } catch (editError) {
-            console.error('Error while editing the reply:', editError);
+            log("e",'Error while editing the reply:', editError);
         }
     }
 };

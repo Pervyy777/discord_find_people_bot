@@ -8,6 +8,7 @@ const SEARCH = require("../utils/search");
 const LIKED_USERS = require("../utils/likedUsers");
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
 const fetchPhotoFiles = require("../utils/takePhotos");
+const log = require('../utils/debugLog');
 
 async function ancetAnswerReportModal(interaction) {
     try {
@@ -19,17 +20,16 @@ async function ancetAnswerReportModal(interaction) {
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (UserDB && existingUserUserDB && UserDB._id.toString() === likeDB.userLiked.toString() ) {
-               // Convert ObjectId to string for comparison
-UserDB.liked = UserDB.liked.filter(function(item) {
-    return item.toString() !== likeDB._id.toString();
-  });
-
+              
   // Save the updated user object
   try {
-    await UserDB.save();
-    console.log('Like removed and user saved successfully.');
+    await User.updateOne(
+        { _id: likeDB._id },
+        { $pull: { liked: likeDB._id } }
+     )
+    log("i",'Like removed and user saved successfully.');
   } catch (error) {
-    console.error('Error saving user:', error);
+    log("e",'Error saving user:', error);
   }
 
             if (!existingUserUserDB.couple.includes(UserDB._id)) {
@@ -68,12 +68,12 @@ const text = likeDB.message? `\n \nСообщение от пользовате�
             try {
                 const channel = interaction.message.client.channels.cache.get(process.env.REPORT_CHAT);
                 if (!channel) {
-                    console.error('Channel not found or the bot does not have access to the channel');
+                    log("e",'Channel not found or the bot does not have access to the channel');
                 } else {
                     await channel.send(options);
                 }
             } catch (error) {
-                console.error('Error sending message:', error);
+                log("e",'Error sending message:', error);
             }
 
             const userEmbedReply = new EmbedBuilder()
@@ -90,16 +90,16 @@ const text = likeDB.message? `\n \nСообщение от пользовате�
 
                 await channel.send(userOptions);
             } catch (error) {
-                console.error('Error sending message:', error);
+                log("e",'Error sending message:', error);
             }
         }
             
         } else {
-            console.log('User not found');
+            log("w",'User not found');
         }
         return LIKED_USERS(interaction);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -110,24 +110,26 @@ async function ancetLookReportModal(interaction) {
         const reason = interaction.fields.getTextInputValue('reason');
         const description = interaction.fields.getTextInputValue('description');
 
-        const existingUserProfile = await Profile.findOne({ _id: profileID });
+        const existingUserProfile = await Profile.findById( profileID );
         const existingUserUserDB = await User.findOne({ profile: profileID });
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (!existingUserProfile) {
-            console.log('Profile not found for ID:', profileID);
+            log("w",'Profile not found for ID:', profileID);
         }
         if (!existingUserUserDB) {
-            console.log('User not found for ID:', profileID);
+            log("w",'User not found for ID:', profileID);
         }
         if (!UserDB) {
-            console.log('Current user not found for Discord ID:', interaction.user.id);
+            log("w",'Current user not found for Discord ID:', interaction.user.id);
         }
 
         if (existingUserProfile && UserDB && existingUserUserDB) {
             if (!existingUserProfile.ratedUsers.includes(UserDB._id)) {
-            existingUserProfile.ratedUsers.push(UserDB._id);
-            await existingUserProfile.save();
+                await Profile.updateOne(
+                    { _id: existingUserProfile._id },
+                    { $push: { ratedUsers: UserDB._id } } // Ensure user._id is directly pushed
+                );
 
             const reportDetails = {
                 user: existingUserUserDB._id,
@@ -164,7 +166,7 @@ async function ancetLookReportModal(interaction) {
 
             await channel.send(options);
         } catch (error) {
-            console.error('Error sending message:', error);
+            log("e",'Error sending message:', error);
         }
 
         const userEmbedReply = new EmbedBuilder()
@@ -181,15 +183,15 @@ async function ancetLookReportModal(interaction) {
 
             await channel.send(userOptions);
         } catch (error) {
-            console.error('Error sending message:', error);
+            log("e",'Error sending message:', error);
         }
     }
         } else {
-            console.log('User or profile not found, unable to process like interaction.');
+            log("w",'User or profile not found, unable to process like interaction.');
         }
         return SEARCH(interaction);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -229,7 +231,7 @@ modal.addComponents(actionRow1, actionRow2);
 // Show the modal to the user
 return interaction.showModal(modal);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -250,9 +252,8 @@ async function ancetReportBanModal(interaction) {
 
         const reportDB = await Report.findOne({ _id: reportID });
         const existingUserUserDB = await User.findOne({ _id: reportDB.user });
-        const verifyUsersDB = await Verify.findOne({ userDiscordId: existingUserUserDB.userDiscordId });
 
-        if (existingUserUserDB && reportDB && verifyUsersDB && !verifyUsersDB.ban) {
+        if (existingUserUserDB && reportDB && !existingUserUserDB.ban) {
             await interaction.deferUpdate();
 
             const banDetails = {
@@ -266,13 +267,20 @@ async function ancetReportBanModal(interaction) {
             const newBan = new Ban(banDetails);
             await newBan.save();
 
-            verifyUsersDB.ban = newBan._id;
-            verifyUsersDB.banHistory.push(newBan._id);
-            await verifyUsersDB.save();
+            existingUserUserDB.ban = newBan._id;
+            await existingUserUserDB.save();
+            
+            await User.updateOne(
+                { _id: existingUserUserDB._id },
+                { $push: { banHistory: newBan._id } } // Ensure user._id is directly pushed
+            );
 
             await Profile.findByIdAndDelete(existingUserUserDB.profile);
-            existingUserUserDB.profile = null;
-            await existingUserUserDB.save();
+
+            await User.updateOne(
+                { _id: existingUserUserDB._id },  // Replace with the appropriate user identifier
+                { $unset: { profile: "" } }
+             )
 
             return interaction.message.edit({
                 content: 'User has been banned successfully.',
