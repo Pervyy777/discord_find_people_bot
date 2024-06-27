@@ -57,7 +57,7 @@ module.exports = {
     name: 'guildMemberAdd',
     async execute(interaction, client) {
         const userId = interaction.user.id;
-        const lang = interaction.locale;
+        const lang = "ru"
         try {
             if (interaction.guild && interaction.guild.id === process.env.SERVER_ID && !interaction.user.bot) {
                 const existingUser = await Verify.findOne({ userDiscordId: userId });
