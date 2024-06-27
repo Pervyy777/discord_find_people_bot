@@ -276,7 +276,8 @@ async function ancetSaveData(interaction, name, age, city, description, gender, 
         await Profile.findByIdAndDelete(existingUser.profile)
 
         const newProfile = new Profile({
-            user: existingUser._id,        
+            user: existingUser._id,  
+            age,      
             gender,
             interestingGender,
             ...(cityFound && { cityEn: cityFound.cityNameEn, country: cityFound.country }),
