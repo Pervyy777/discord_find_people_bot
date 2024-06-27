@@ -2,6 +2,7 @@ const {ComponentType, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder
 const FIND_CITY = require('../utils/findCity');
 const log = require('../utils/debugLog');
 const User = require("../models/user");
+const PromoCode = require("../models/promoCode");
 const fs = require('fs');
 const axios = require('axios');
 const path = require('path');
@@ -18,7 +19,7 @@ async function createUser(userDetails) {
         // Save the new user to the database
         await newUser.save();
 
-        console.log('User created successfully:', newUser);
+        log("i", 'User created successfully:', newUser);
         return newUser;
     } catch (error) {
         console.error('Error creating user:', error);
@@ -27,11 +28,11 @@ async function createUser(userDetails) {
 }
 
 async function ancetFillModal(interaction) {
+    const promoCode = interaction.customId.split('_')[2];
     const lang = interaction.locale; 
-
       // Create the modal
       const modal = new ModalBuilder()
-          .setCustomId('ancet_datafill')
+          .setCustomId(`ancet_datafill_${promoCode}`)
           .setTitle(language.getLocalizedString(lang, 'modalTitle'));
 
       // Add components to modal
@@ -90,6 +91,7 @@ function containsForbiddenWords(text) {
 }
 
 async function ancetFillGender(interaction) {
+    const promoCode = interaction.customId.split('_')[2];
     const lang = interaction.locale; 
     // Retrieve input values from the modal
     const name = interaction.fields.getTextInputValue('nameInput');
@@ -143,14 +145,12 @@ async function ancetFillGender(interaction) {
 
             // Обновите исходное сообщение с отключенными компонентами
             await sentMsg.edit({ components: [choseRow] });
-            console.log('Таймер завершен!');
+            log("i",'Таймер завершен!');
         }, 3 * 60 * 1000);
 
         const collector = channel.createMessageComponentCollector({ filter, time: 3 * 60 * 1000, componentType: ComponentType.Button });
         collector.on('collect', async (interaction) => {
-            console.log(`Собрано ${interaction.customId}`);
-            console.log(`i.message.id: ${interaction.message.id}`);
-            console.log(`sentMsg.id: ${sentMsg.id}`);
+            log("i",`Собрано ${interaction.customId}`);
             clearTimeout(timeoutId); // Очистите таймаут с использованием идентификатора таймаута
             // Проверка, является ли пользователь, взаимодействующий с кнопками, тем же самым отправителем
             if (interaction.isButton()) {
@@ -158,14 +158,14 @@ async function ancetFillGender(interaction) {
                     return interaction.reply({ content: language.getLocalizedString(lang, 'notSender'), ephemeral: true });
                 }
 
-                    return ancetFillInterestingGender(interaction, name, age,city, description);
+                    return ancetFillInterestingGender(interaction, name, age,city, description, promoCode);
             }
         });
-        collector.on('end', collected => console.log(`Собрано ${collected.size} элементов`));
+        collector.on('end', collected => log("i",`Собрано ${collected.size} элементов`));
     });
 }
 
-async function ancetFillInterestingGender(interaction, name, age, city, description) {
+async function ancetFillInterestingGender(interaction, name, age, city, description, promoCode) {
     const gender = interaction.customId.split('_')[2];
     const lang = interaction.locale; 
 
@@ -175,17 +175,17 @@ async function ancetFillInterestingGender(interaction, name, age, city, descript
         .setDescription(language.getLocalizedString(lang, 'selectWhoToFind'));
 
     const male = new ButtonBuilder()
-        .setCustomId(`ancet_interestinggenderfill_${gender}_male`)
+        .setCustomId(`ancet_interestinggenderfill_male`)
         .setLabel(language.getLocalizedString(lang, 'male'))
         .setStyle(ButtonStyle.Secondary);
 
     const female = new ButtonBuilder()
-        .setCustomId(`ancet_interestinggenderfill_${gender}_female`)
+        .setCustomId(`ancet_interestinggenderfill_female`)
         .setLabel(language.getLocalizedString(lang, 'female'))
         .setStyle(ButtonStyle.Secondary);
 
     const other = new ButtonBuilder()
-        .setCustomId(`ancet_interestinggenderfill_${gender}_other`)
+        .setCustomId(`ancet_interestinggenderfill_other`)
         .setLabel(language.getLocalizedString(lang, 'doesNotMatter'))
         .setStyle(ButtonStyle.Secondary);
 
@@ -206,14 +206,12 @@ async function ancetFillInterestingGender(interaction, name, age, city, descript
 
             // Обновите исходное сообщение с отключенными компонентами
             await sentMsg.edit({ components: [choseRow] });
-            console.log('Таймер завершен!');
+            log("i",'Таймер завершен!');
         }, 3 * 60 * 1000);
 
         const collector = channel.createMessageComponentCollector({ filter, time: 3 * 60 * 1000, componentType: ComponentType.Button });
         collector.on('collect', async (interaction) => {
             console.log(`Собрано ${interaction.customId}`);
-            console.log(`i.message.id: ${interaction.message.id}`);
-            console.log(`sentMsg.id: ${sentMsg.id}`);
             clearTimeout(timeoutId); // Очистите таймаут с использованием идентификатора таймаута
             // Проверка, является ли пользователь, взаимодействующий с кнопками, тем же самым отправителем
             if (interaction.isButton()) {
@@ -221,16 +219,42 @@ async function ancetFillInterestingGender(interaction, name, age, city, descript
                     return interaction.reply({ content: language.getLocalizedString(lang, 'notSender'), ephemeral: true });
                 }
 
-                return ancetSaveData(interaction, name, age, city, description);
+                return ancetSaveData(interaction, name, age, city, description, gender, promoCode);
             }
         });
-        collector.on('end', collected => console.log(`Собрано ${collected.size} элементов`));
+        collector.on('end', collected => log("i",`Собрано ${collected.size} элементов`));
     });
 }
-async function ancetSaveData(interaction, name, age, city, description) {
+
+// Function to generate a random promo code
+function generatePromoCode(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  }
+  
+  // Function to generate a unique promo code
+  async function generateUniquePromoCode(length) {
+    let promoCode;
+    let isUnique = false;
+  
+    while (!isUnique) {
+      promoCode = generatePromoCode(length);
+      const existingCode = await PromoCode.findOne({ code: promoCode });
+      if (!existingCode) {
+        isUnique = true;
+      }
+    }
+  
+    return promoCode;
+  }
+
+async function ancetSaveData(interaction, name, age, city, description, gender, promoCode) {
     const cityFound = await FIND_CITY(city);
-    const gender = interaction.customId.split('_')[2];
-    const interestingGender = interaction.customId.split('_')[3];
+    const interestingGender = interaction.customId.split('_')[2];
 
     // Prepare the userDetails object based on whether the city is found or not
     const userDetails = {
@@ -264,9 +288,9 @@ async function ancetSaveData(interaction, name, age, city, description) {
         // Update the existing user's details
         Object.assign(existingUser, userDetails);
         existingUser.save().then(user => {
-            console.log('Updated user:', user);
+            log("i",'Updated user:', user);
         }).catch(error => {
-            console.error('Error:', error);
+            log("e", error);
         });
     } else {
         // Create a new user
@@ -279,14 +303,39 @@ async function ancetSaveData(interaction, name, age, city, description) {
                 ...(cityFound && { cityEn: cityFound.cityNameEn, country: cityFound.country }),
             })
             await newProfile.save()
-    
+
+            const promoCodeString = await generateUniquePromoCode(5);
+            const newPromoCode = new PromoCode({
+                code: promoCodeString,
+                userId: user._id,         
+            })
+            await newPromoCode.save()
+
+            const promoCodeDB = await PromoCode.findOne({code: promoCode})
+            if(promoCodeDB){
+                await PromoCode.updateOne(
+                    { _id: promoCodeDB._id },
+                    { $push: { usersUsed: user._id } } // Ensure user._id is directly pushed
+                );
+
+                await User.updateOne(
+                    { _id: promoCodeDB.userId },
+                    { $inc: { likesTodayCount: 20, likesDayCount: 20 } }
+                );
+                
+                 user.likesTodayCount = user.likesTodayCount + 20
+                 user.likesDayCount = user.likesDayCount + 20
+                
+            }
+
             user.profile = newProfile._id;
+            user.promoCode = newPromoCode._id;
 
             await user.save()
 
-            console.log('Created user:', user);
+            log("i", 'Created user:', user);
         }).catch(error => {
-            console.error('Error:', error);
+            log('e', error);
         });
     }
 
@@ -407,16 +456,16 @@ async function ancetFillPhotos(interaction) {
                                 userDB.photos.push(photo._id);
                                 await userDB.save();
 
-                                console.log(`Saved attachment: ${filePath}`);
+                                log("i",`Saved attachment: ${filePath}`);
                                 }
                             });
 
                             response.data.on('error', (err) => {
-                                console.error('Error downloading the file:', err);
+                                log("e",'Error downloading the file:', err);
                                 message.reply(language.getLocalizedString(lang, 'fileSaveError'));
                             });
                         } catch (error) {
-                            console.error('Error fetching the file:', error);
+                            log("e",'Error fetching the file:', error);
                             await message.reply(language.getLocalizedString(lang, 'fileUploadError'));
                         }
                     } else {
@@ -471,10 +520,10 @@ async function ancetFillDescriptionData(interaction) {
             existingUser.description = description;
             await existingUser.save();
         } else {
-            console.log('User not found');
+            log("i",'User not found');
         }
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e", error);
     }
 }
 

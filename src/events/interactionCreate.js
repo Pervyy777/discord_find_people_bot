@@ -12,32 +12,20 @@ const Profile  = require('../models/profile');
 const {ancetAnswerReportModal, ancetLookReportModal, ancetReportBanModal, ancetReportBan } = require('../interactions/ancet_report')
 const Verify  = require('../models/verify');
 const Ban  = require('../models/ban');
+const {fillPromoCode, fillPromoCodeButtons, checkPromoCodeButtons} = require('../interactions/start_fill');
 
 const language = require('../utils/language'); // Adjust the path based on your project structure
 
 module.exports = {
     name: 'interactionCreate',
     async execute(interaction, client) {
+        const lang = interaction.locale; 
         log("i", "interactionCreate");
         try {
-            const lang = interaction.locale; // Fetch the locale directly from interaction (assuming it's already available)
+            // Fetch the locale directly from interaction (assuming it's already available)
+            log("i", lang)
 
-            const verifyDB = await Verify.findOne({userDiscordId: interaction.user.id})
-            if (verifyDB && !!verifyDB.ban) {
-                const banDB = await Verify.findOne({ userDiscordId: interaction.user.id });
-                if (banDB) {
-                    const reason = banDB.reason || 'No reason specified';
-                    const dateUntil = banDB.dateUntil || 'Unknown';
-                    return interaction.reply({
-                      content: language.getLocalizedString(lang, 'banMessage')
-                        .replace('{reason}', reason)
-                        .replace('{dateUntil}', dateUntil),
-                      ephemeral: true
-                    });
-                }
-            }
             const userDB = await User.findOne({userDiscordId: interaction.user.id});
-
             if (userDB) {
                 userDB.lastActivity = Date.now();
                 userDB.language = interaction.locale;
@@ -57,8 +45,21 @@ module.exports = {
                     await newProfile.save();
 
                     userDB.profile = newProfile._id;
+                    await userDB.save();
                 }
-                await userDB.save();
+                if (!!userDB.ban) {
+                    const banDB = await Ban.findById(userDB.ban);
+                    if (banDB) {
+                        const reason = banDB.reason || 'No reason specified';
+                        const dateUntil = banDB.dateUntil || 'Unknown';
+                        return interaction.reply({
+                          content: language.getLocalizedString(lang, 'banMessage')
+                            .replace('{reason}', reason)
+                            .replace('{dateUntil}', dateUntil),
+                          ephemeral: true
+                        });
+                    }
+                }
             }
             
             if (interaction.isCommand()) {
@@ -151,6 +152,17 @@ module.exports = {
                                     break;
                             }
                             break;
+                            case 'fill':
+                                switch (userChoice) {
+                                    case 'start':
+                                        await fillPromoCode(interaction);
+                                        break;
+                                    case "promo":
+                                        await fillPromoCodeButtons(interaction)
+                                        break;
+                                }
+                                break;
+                                
                     default:
                         log('w', 'Unknown button interaction:', interaction.customId);
                 }
@@ -199,6 +211,13 @@ module.exports = {
                                             break;
                                     }
                                     break;
+                                    case 'promo':
+                                        switch (userChoice) {
+                                            case 'check':
+                                                await checkPromoCodeButtons(interaction);
+                                                break;
+                                        }
+                                        break;
                     default:
                         log('w', 'Unknown modal interaction:', interaction.customId);
                 }
@@ -209,7 +228,7 @@ module.exports = {
                 const userChoice = interaction.customId.split('_')[1];
             }
         } catch (error) {
-            console.error(error);
+            log("e", error);
             await interaction.reply({ content: language.getLocalizedString(lang, 'interactionError'), ephemeral: true });
             await interaction.reply({content: 'There was an error while interaction!', ephemeral: true});
         }

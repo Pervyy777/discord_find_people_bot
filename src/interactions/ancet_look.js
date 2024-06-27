@@ -7,6 +7,7 @@ const SEARCH = require("../utils/search");
 const LIKED_USERS = require("../utils/likedUsers");
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
 const fetchPhotoFiles = require("../utils/takePhotos");
+const log = require('../utils/debugLog');
 
 const language = require('../utils/language');
 
@@ -20,16 +21,16 @@ async function ancetLookLike(interaction) {
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (!existingUserProfile) {
-            console.log('Profile not found for ID:', profileID);
+            log("w",'Profile not found for ID:', profileID);
         }
         if (!existingUserUserDB) {
-            console.log('User not found for ID:', profileID);
+            log("w",'User not found for ID:', profileID);
         }
         if (!UserDB) {
-            console.log('Current user not found for Discord ID:', interaction.user.id);
+            log("w",'Current user not found for Discord ID:', interaction.user.id);
         }
 
-        if (existingUserProfile && UserDB && existingUserUserDB) {
+        if (existingUserProfile && UserDB && existingUserUserDB && UserDB.likesDayCount <= 0) {
             if (!existingUserProfile.ratedUsers.includes(UserDB._id)) {
                 
             let message
@@ -49,11 +50,20 @@ async function ancetLookLike(interaction) {
             const newLike = new Like(likeDetails);
             await newLike.save();
 
-            existingUserUserDB.liked.push(newLike._id);
-            await existingUserUserDB.save();
+            await User.updateOne(
+                { _id: existingUserUserDB._id },
+                { $push: { liked: newLike._id } }
+            );
 
-            existingUserProfile.ratedUsers.push(UserDB._id);
-            await existingUserProfile.save();
+            await Profile.updateOne(
+                { _id: existingUserProfile._id },
+                { $push: { ratedUsers: UserDB._id } } // Ensure user._id is directly pushed
+            );
+
+            User.updateOne(
+                { _id: UserDB._id },  // Replace with the appropriate user identifier
+                { $inc: { likesDayCount: -1 } }
+             )
 
             let text = existingUserUserDB.liked.length == 1 
                 ? language.getLocalizedString(existingUserUserDB.language, 'likedUserSingular')
@@ -91,32 +101,21 @@ async function ancetLookLike(interaction) {
                     if (channel) {
                         await channel.send(options);
                     } else {
-                        console.error('Channel not found for roomDiscordId:', existingUserVerify.roomDiscordId);
+                        log("e",'Channel not found for roomDiscordId:', existingUserVerify.roomDiscordId);
                     }
                 } else {
-                    console.error('Verification not found for userDiscordId:', existingUserUserDB.userDiscordId);
+                    log("e",'Verification not found for userDiscordId:', existingUserUserDB.userDiscordId);
                 }
             } catch (error) {
-                console.error('Error sending message to the channel:', error);
+                log("e",'Error sending message to the channel:', error);
             }}
-/*
-            try {
-                const user = interaction.message.client.users.cache.get(existingUserUserDB.userDiscordId);
-                if (user) {
-                    await user.send(options);
-                } else {
-                    console.error('User not found in client cache for userDiscordId:', existingUserUserDB.userDiscordId);
-                }
-            } catch (error) {
-                console.error('Error sending message to the user:', error);
-            }}
-*/
+            
         } else {
-            console.log('User or profile not found, unable to process like interaction.');
+            log("w",'User or profile not found, unable to process like interaction.');
         }
         return SEARCH(interaction);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -128,25 +127,27 @@ async function ancetLookDislike(interaction) {
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (!existingUserProfile) {
-            console.log('Profile not found for ID: ', profileID);
+           log("w",'Profile not found for ID: ', profileID);
         }
         if (!UserDB) {
-            console.log('Current user not found for Discord ID: ', interaction.user.id);
+            log("w",'Current user not found for Discord ID: ', interaction.user.id);
         }
 
         if (existingUserProfile && UserDB) {
             if (!existingUserProfile.ratedUsers.includes(UserDB._id)) {
-                existingUserProfile.ratedUsers.push(UserDB._id);
-                await existingUserProfile.save();
+                await Profile.updateOne(
+                    { _id: existingUserProfile._id },
+                    { $push: { ratedUsers: UserDB._id } } // Ensure user._id is directly pushed
+                );
             } else {
-                console.log('User has already rated this profile.');
+                log("i",'User has already rated this profile.');
             }
         } else {
-            console.log('User or profile not found, unable to process dislike interaction.');
+            log("w",'User or profile not found, unable to process dislike interaction.');
         }
         return SEARCH(interaction);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e", error);
     }
 }
 
@@ -184,7 +185,7 @@ modal.addComponents(actionRow1, actionRow2);
 // Show the modal to the user
 return interaction.showModal(modal);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -199,8 +200,11 @@ async function ancetLookNoMoreSearch(interaction) {
 
     await Profile.findByIdAndDelete(existingUser.profile)
 
-    existingUser.profile = null
-    await existingUser.save()
+
+   await User.updateOne(
+        { _id: existingUser._id },  // Replace with the appropriate user identifier
+        { $unset: { profile: "" } }
+     )
     return interaction.reply("ready")
 }
 
@@ -229,7 +233,7 @@ modal.addComponents(actionRow1);
 // Show the modal to the user
 return interaction.showModal(modal);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 

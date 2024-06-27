@@ -2,14 +2,37 @@ const {EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle} = require('di
 const User = require("../models/user");
 const Profile = require("../models/profile");
 const fetchPhotoFiles = require('./takePhotos');
+const log = require('./debugLog.js');
+const language = require('./language');
 
 module.exports = async (interaction) => {
+    const lang = interaction.locale; 
     try {
         if (!interaction.message)await interaction.deferReply();
         else await interaction.deferUpdate();
         const userDB = await User.findOne({userDiscordId: interaction.user.id});
         if (!userDB) {
             await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
+            return;
+        }
+        if (userDB.likesTodayCount <= 0) {
+            const embedReply = new EmbedBuilder()
+                .setColor(0x000000)
+                .setDescription(language.getLocalizedString(lang, 'tooMachLikes').replace('{promocode}',userDB.promoCode ));
+
+            const options = {
+                embeds: [embedReply],
+                components: [],
+                files: []
+            };
+
+            if (interaction.message) {
+                await interaction.message.edit(options);
+            } else if (interaction.replied || interaction.deferred) {
+                await interaction.editReply(options);
+            } else {
+                await interaction.reply(options);
+            }
             return;
         }
 
@@ -67,7 +90,7 @@ module.exports = async (interaction) => {
 
         const randomProfile = await User.findOne({_id: profile.user._id});
         if (!randomProfile) {
-            console.error('Profile user not found:', profile.user);
+            log("e",'Profile user not found:', profile.user);
             await interaction.editReply(language.getLocalizedString(lang, 'userNotFound'));
             return;
         }
@@ -114,11 +137,11 @@ module.exports = async (interaction) => {
         }
 
     } catch (error) {
-        console.error('Error while processing the interaction:', error);
+        log("e",'Error while processing the interaction:', error);
         try {
             await interaction.editReply(language.getLocalizedString(lang, 'errorProcessing'));
         } catch (editError) {
-            console.error('Error while editing the reply:', editError);
+            log("e",'Error while editing the reply:', editError);
         }
     }
 };

@@ -30,7 +30,7 @@ const userSchema = new Schema({
     },
     gender: {
         type: String,
-        enum: ['male', 'female', 'other'],
+        enum: ['male', 'female'],
         required: true,
     },
     interestingGender: {
@@ -48,7 +48,7 @@ const userSchema = new Schema({
     },
     likesTodayCount: {
         type: Number,
-        default: 0,
+        default: 40,
     },
     photos: [{
         type: Schema.Types.ObjectId,
@@ -70,7 +70,19 @@ const userSchema = new Schema({
         type: String,
         required: true,
         default: "en",
-    }
+    },
+    promoCode:{
+        type: Schema.Types.ObjectId,
+        ref: 'PromoCode',
+    },
+    ban: {
+        type: Schema.Types.ObjectId,
+        ref: 'Ban',
+    },
+    banHistory: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Ban',
+    }]
 });
 
 const User = model('User', userSchema);

@@ -1,17 +1,19 @@
 require('dotenv').config();
 const cron = require('node-cron');
 const unactivUsers = require('./src/events/timed/deleteProfileExpired');
+const updateLikes = require('./src/events/timed/addLikes');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const mongoose = require('mongoose');
+const log = require('./src/utils/debugLog');
 
 mongoose.connect(process.env.MONGODB_URI);
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 db.once('open', () => {
-    console.log('Connected to MongoDB!');
+    log("i",'Connected to MongoDB!');
 });
 const client = new Client({
     intents: [
@@ -46,7 +48,8 @@ for (const file of eventFiles) {
 
 //every day
 cron.schedule('0 0 * * *', async () => {
-    await unactivUsers(client)
+    await updateLikes()
+    await unactivUsers()
 });
 
 client.login(process.env.DISCORD_TOKEN);
