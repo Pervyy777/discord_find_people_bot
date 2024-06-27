@@ -13,10 +13,10 @@ async function createVerify(verifyDetails) {
     try {
         const newVerify = new Verify(verifyDetails);
         await newVerify.save();
-        console.log('Verify created successfully:', newVerify);
+        log("i",'Verify created successfully:', newVerify);
         return newVerify;
     } catch (error) {
-        console.error('Error creating verify:', error);
+        log("e",'Error creating verify:', error);
         throw error;
     }
 }
@@ -25,18 +25,18 @@ async function findOrCreateCategory(guild, categoryName) {
     let categoryIds = await redis.lrange(`guild:${guild.id}:categories`, 0, -1);
     let category;
 
-    console.log(`Fetched category IDs from Redis: ${categoryIds}`);
+    log("i",`Fetched category IDs from Redis: ${categoryIds}`);
 
     for (const categoryId of categoryIds) {
         const existingCategory = guild.channels.cache.get(categoryId);
         if (existingCategory && existingCategory.type === 4) { // 4 is the type for category
-            console.log(`Found existing category: ${existingCategory.name} with ${existingCategory.children.cache.size} channels`);
+            log("i",`Found existing category: ${existingCategory.name} with ${existingCategory.children.cache.size} channels`);
             if (existingCategory.children.cache.size < CATEGORY_LIMIT) {
                 category = existingCategory;
                 break;
             }
         } else {
-            console.log(`Category ID ${categoryId} not found in guild cache, removing from Redis.`);
+            log("w",`Category ID ${categoryId} not found in guild cache, removing from Redis.`);
             await redis.lrem(`guild:${guild.id}:categories`, 0, categoryId);
         }
     }
@@ -47,7 +47,7 @@ async function findOrCreateCategory(guild, categoryName) {
             type: 4, // Correct type for category
         });
         await redis.rpush(`guild:${guild.id}:categories`, category.id);
-        console.log(`Created new category: ${category.name}`);
+        log("i",`Created new category: ${category.name}`);
     }
 
     return category;
@@ -58,7 +58,6 @@ module.exports = {
     async execute(interaction, client) {
         const userId = interaction.user.id;
         const lang = interaction.locale;
-
         try {
             if (interaction.guild && interaction.guild.id === process.env.SERVER_ID && !interaction.user.bot) {
                 const existingUser = await Verify.findOne({ userDiscordId: userId });
@@ -74,7 +73,7 @@ module.exports = {
                         permissionOverwrites: [
                             {
                                 id: interaction.guild.id,
-                                deny: [PermissionsBitField.Flags.ViewChannel],
+                                deny: [PermissionsBitField.Flags.ViewChannel ],
                             },
                             {
                                 id: interaction.user.id,
@@ -100,7 +99,7 @@ module.exports = {
                     // Assuming `newRoom` is the object representing the room or channel to send the message
                     await newRoom.send({embeds: [startMessageEmbed]});
 
-                    console.log('Account registered successfully!');
+                    log("i",'Account registered successfully!');
                 } else {
                     const existingRoom = interaction.guild.channels.cache.get(existingUser.roomDiscordId);
 
@@ -110,7 +109,7 @@ module.exports = {
                             SendMessages: true,
                             ReadMessageHistory: true,
                         });
-                        console.log('User already verified. Added to the existing room.');
+                        log("i",'User already verified. Added to the existing room.');
                     } else {
                         const category = await findOrCreateCategory(interaction.guild, 'Text Room');
 
@@ -137,12 +136,12 @@ module.exports = {
 
                         existingUser.roomDiscordId = newRoom.id;
                         await existingUser.save();
-                        console.log('Existing verification found, but room does not exist. Created a new room.');
+                        log("w",'Existing verification found, but room does not exist. Created a new room.');
                     }
                 }
             }
         } catch (error) {
-            console.error('Error handling guildMemberAdd event:', error);
+            log("e",'Error handling guildMemberAdd event:', error);
         }
     },
 };

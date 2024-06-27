@@ -1,5 +1,5 @@
 const Redis = require('ioredis');
-
+const log = require('./debugLog.js');
 // Create a Redis client
 const redis = new Redis();
 
@@ -29,14 +29,14 @@ module.exports = async (cityInput) => {
         const cityNames = cityInput; // CityNames to search for
         const cityNameEn = findCityNameEn(cityNames);
         if (cityNameEn) {
-            console.log(`The English city name for '${cityNames}' is '${cityNameEn.cityNameEn}'.`);
+            log("i",`The English city name for '${cityNames}' is '${cityNameEn.cityNameEn}'.`);
             return cityNameEn;
         } else {
-            console.log(`City name not found for '${cityNames}'.`);
+            log("w",`City name not found for '${cityNames}'.`);
             return null;
         }
     } catch (error) {
-        console.error('Error:', error);
+        log("e",'Error:', error);
         throw new Error('Error retrieving city data from Redis');
     }
 };

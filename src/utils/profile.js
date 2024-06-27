@@ -1,8 +1,10 @@
 const {EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle} = require('discord.js');
 const User = require("../models/user");
 const fetchPhotoFiles = require('./takePhotos');
-
+const log = require('./debugLog.js');
+const language = require('./language');
 module.exports = async (interaction) => {
+    const lang = interaction.locale; 
     try {
         // Defer the reply to acknowledge the interaction
         await interaction.deferReply();
@@ -46,11 +48,11 @@ module.exports = async (interaction) => {
         // Send the message with embeds, buttons, and files
         await interaction.editReply(options);
     } catch (error) {
-        console.error('Error while processing the interaction:', error);
+        log("e",'Error while processing the interaction:', error);
         try {
             await interaction.editReply(language.getLocalizedString(lang, 'errorProcessing'));
         } catch (editError) {
-            console.error('Error while editing the reply:', editError);
+            log("e",'Error while editing the reply:', editError);
         }
     }
 };

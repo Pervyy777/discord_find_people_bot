@@ -6,6 +6,7 @@ const SEARCH = require("../utils/search");
 const LIKED_USERS = require("../utils/likedUsers");
 const { EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, ModalBuilder,TextInputStyle,TextInputBuilder } = require("discord.js");
 const fetchPhotoFiles = require("../utils/takePhotos");
+const log = require('../utils/debugLog');
 
 const language = require('../utils/language');
 
@@ -18,24 +19,25 @@ async function ancetAnswerLike(interaction) {
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (UserDB && existingUserUserDB && UserDB._id.toString() === likeDB.userLiked.toString() ) {
-               // Convert ObjectId to string for comparison
-   UserDB.liked = UserDB.liked.filter(function(item) {
-    return item.toString() !== likeDB._id.toString();
-  });
 
   // Save the updated user object
   try {
-    await UserDB.save();
-    console.log('Like removed and user saved successfully.');
+    await User.updateOne(
+        { _id: likeDB._id },
+        { $pull: { liked: likeDB._id } }
+     )
+     await Like.findByIdAndDelete(likeDB._id);
+    log("i",'Like removed and user saved successfully.');
   } catch (error) {
-    console.error('Error saving user:', error);
+    log("e",'Error saving user:', error);
   }
 
             if (!existingUserUserDB.couple.includes(UserDB._id)) {
 
-            // Push the ObjectId to the couple array
-            existingUserUserDB.couple.push(UserDB._id);
-            await existingUserUserDB.save();
+                await User.updateOne(
+                    { _id: existingUserUserDB._id },
+                    { $push: { couple: user._id } } // Ensure user._id is directly pushed
+                );
 
 
             let text = existingUserUserDB.couple.length < 2 
@@ -68,7 +70,7 @@ async function ancetAnswerLike(interaction) {
 
                 await channel.send(options);
             } catch (error) {
-                console.error('Error sending message:', error);
+                log("e",'Error sending message:', error);
             }
 
             const userEmbedReply = new EmbedBuilder()
@@ -88,16 +90,16 @@ async function ancetAnswerLike(interaction) {
 
                 await channel.send(userOptions);
             } catch (error) {
-                console.error('Error sending message:', error);
+                log("e",'Error sending message:', error);
             }
         }
             
         } else {
-            console.log('User not found');
+            log("i",'User not found');
         }
         return LIKED_USERS(interaction);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -109,17 +111,23 @@ async function ancetAnswerDislike(interaction) {
         const UserDB = await User.findOne({ userDiscordId: interaction.user.id });
 
         if (UserDB && likeDB) {
-   // Convert ObjectId to string for comparison
-   UserDB.liked = UserDB.liked.filter(function(item) {
-    return item.toString() !== likeDB._id.toString();
-  });
-            await UserDB.save();
+  // Save the updated user object
+  try {
+    await User.updateOne(
+        { _id: likeDB._id },
+        { $pull: { liked: likeDB._id } }
+     )
+     await Like.findByIdAndDelete(likeDB._id);
+    log("i",'Like removed and user saved successfully.');
+  } catch (error) {
+    log("e",'Error saving user:', error);
+  }
         } else {
-            console.log('User not found');
+            log("w",'User not found');
         }
         return LIKED_USERS(interaction)
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -157,7 +165,7 @@ modal.addComponents(actionRow1, actionRow2);
 // Show the modal to the user
 return interaction.showModal(modal);
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
     }
 }
 
@@ -192,7 +200,7 @@ async function ancetAnswerYes(interaction) {
     
                     await channel.send(options);
                 } catch (error) {
-                    console.error('Error sending message:', error);
+                    log("e",'Error sending message:', error);
                 }
             });
 
@@ -202,7 +210,7 @@ async function ancetAnswerYes(interaction) {
             return interaction.reply(language.getLocalizedString(lang, 'noCouples'));
         }
     } catch (error) {
-        console.error('An error occurred:', error);
+        log("e",'An error occurred:', error);
         return interaction.reply(language.getLocalizedString(lang, 'errorProcessing'));
     }
 }

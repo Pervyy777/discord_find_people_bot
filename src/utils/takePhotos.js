@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const Photo = require('../models/photo'); // Путь к модели Photo
+const log = require('./debugLog.js');
 
 async function fetchPhotoFiles(userDB) {
     const files = [];
@@ -16,10 +17,10 @@ async function fetchPhotoFiles(userDB) {
                     name: photoDB.name,
                 });
             } else {
-                console.error(`File not found: ${photoPath}`);
+                log("w",`File not found: ${photoPath}`);
             }
         } else {
-            console.error(`Photo not found in database: ${photo}`);
+            log("w",`Photo not found in database: ${photo}`);
         }
     }
     return files;
