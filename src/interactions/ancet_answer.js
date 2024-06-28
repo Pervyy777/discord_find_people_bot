@@ -36,15 +36,15 @@ async function ancetAnswerLike(interaction) {
 
                 await User.updateOne(
                     { _id: existingUserUserDB._id },
-                    { $push: { couple: user._id } } // Ensure user._id is directly pushed
+                    { $push: { couple: UserDB._id } } // Ensure user._id is directly pushed
                 );
 
 
-            let text = existingUserUserDB.couple.length < 2 
+            let text = existingUserUserDB.couple.length <= 1 
                 ? language.getLocalizedString(existingUserUserDB.language, 'mutualLikeSingle')
-                .replace('{count}', existingUserUserDB.couple.length) 
+                .replace('{count}', existingUserUserDB.couple.length + 1) 
                 : language.getLocalizedString(existingUserUserDB.language, 'mutualLikeMultiple')
-                .replace('{count}', existingUserUserDB.couple.length);
+                .replace('{count}', existingUserUserDB.couple.length + 1);
 
             const embedReply = new EmbedBuilder()
                 .setColor(0x000000)

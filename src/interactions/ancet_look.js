@@ -67,9 +67,9 @@ async function ancetLookLike(interaction) {
 
             let text = existingUserUserDB.liked.length == 1 
                 ? language.getLocalizedString(existingUserUserDB.language, 'likedUserSingular')
-                .replace('{count}', existingUserUserDB.liked.length) 
+                .replace('{count}', existingUserUserDB.liked.length + 1) 
                 : language.getLocalizedString(existingUserUserDB.language, 'likedUserPlural')
-                .replace('{count}', existingUserUserDB.liked.length) ;
+                .replace('{count}', existingUserUserDB.liked.length + 1) ;
 
             const embedReply = new EmbedBuilder()
                 .setColor(0x000000)
