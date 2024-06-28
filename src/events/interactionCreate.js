@@ -2,7 +2,7 @@ const User = require('../models/user');
 const log = require('../utils/debugLog');
 const ancet_fill = require('../utils/ancet_fill');
 const {
-    ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData
+    ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData, ancetPhotos
 } = require('../interactions/ancet_fill');
 const {
     ancetLookLike, ancetLookDislike, ancetLookReport, ancetLookYesantwort, ancetLookNoMoreSearch, ancetLookMessage
@@ -10,7 +10,6 @@ const {
 const {ancetAnswerLike, ancetAnswerDislike, ancetAnswerReport, ancetAnswerYes} = require('../interactions/ancet_answer');
 const Profile  = require('../models/profile');
 const {ancetAnswerReportModal, ancetLookReportModal, ancetReportBanModal, ancetReportBan } = require('../interactions/ancet_report')
-const Verify  = require('../models/verify');
 const Ban  = require('../models/ban');
 const {fillPromoCode, fillPromoCodeButtons, checkPromoCodeButtons} = require('../interactions/start_fill');
 
@@ -104,6 +103,9 @@ module.exports = {
                             case 'descriptionfill':
                                 await ancetFillDescription(interaction);
                                 break;
+                                case "photos":
+                                    await ancetPhotos(interaction);
+                                    break;
                         }
                         break;
                     case 'ancetlook':

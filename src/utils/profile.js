@@ -3,11 +3,11 @@ const User = require("../models/user");
 const fetchPhotoFiles = require('./takePhotos');
 const log = require('./debugLog.js');
 const language = require('./language');
+
 module.exports = async (interaction) => {
     const lang = interaction.locale; 
     try {
-        // Defer the reply to acknowledge the interaction
-        await interaction.deferReply();
+        if (!interaction.message)await interaction.deferReply();
 
         // Check if the user already exists in the database
         const userDB = await User.findOne({userDiscordId: interaction.user.id});
@@ -46,7 +46,13 @@ module.exports = async (interaction) => {
         }
 
         // Send the message with embeds, buttons, and files
-        await interaction.editReply(options);
+        if (interaction.message) {
+            return interaction.message.edit(options);
+        } else if (interaction.replied || interaction.deferred) {
+            return interaction.editReply(options);
+        } else {
+            return interaction.reply(options);
+        }
     } catch (error) {
         log("e",'Error while processing the interaction:', error);
         try {

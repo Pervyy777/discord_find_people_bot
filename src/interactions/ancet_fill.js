@@ -10,6 +10,7 @@ const Photo = require('../models/photo');
 const Profile = require('../models/profile');
 const { v4: uuidv4 } = require('uuid');
 const language = require('../utils/language');
+const PROFILE = require("../utils/profile");
 
 async function createUser(userDetails) {
     try {
@@ -369,121 +370,10 @@ async function ancetFillPhotos(interaction) {
     const choseRow = new ActionRowBuilder().addComponents(confirmButton, cancelButton);
 
     await interaction.deferUpdate();
-    const message = await interaction.message.edit({
+    await interaction.message.edit({
         embeds: [embedReply],
         components: [choseRow],
         files: []
-    });
-
-    const filter = (i) => i.customId === 'ancet_photos_upload' || i.customId === 'ancet_photos_cancel';
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 180000 });
-
-    collector.on('collect', async (i) => {
-        if (i.customId === 'ancet_photos_upload') {
-            await i.deferUpdate();
-            const uploadEmbed = new EmbedBuilder()
-                .setColor(0x000000)
-                .setTitle(language.getLocalizedString(lang, 'uploadPhotosVideosTitle'))
-                .setDescription(language.getLocalizedString(lang, 'uploadPhotosVideosDescription'));
-
-            await i.editReply({ embeds: [uploadEmbed], components: [] });
-
-            const messageFilter = (m) => m.author.id === i.user.id && m.attachments.size > 0;
-            const messageCollector = i.channel.createMessageCollector({ filter: messageFilter, time: 180000 });
-
-            let uploadedFiles = 0;
-
-                        // Clear the user's photos array
-                        const userDB = await User.findOne({ userDiscordId: interaction.user.id });
-                        if (userDB) {
-                            userDB.photos.forEach(async (photo) => {
-                                const photoDB = await Photo.findById(photo);
-                                photoDB.activ = false;
-                                await photoDB.save()
-                            })
-                            userDB.photos = [];
-                            await userDB.save();
-                        }
-
-            messageCollector.on('collect', async (message) => {
-                const attachments = message.attachments;
-
-                if (uploadedFiles >= 3) {
-                    await message.reply(language.getLocalizedString(lang, 'maxFilesUploaded'));
-                    return;
-                }
-
-                for (const attachment of attachments.values()) {
-                    if (uploadedFiles >= 3) break;
-
-                    if (attachment.contentType.startsWith('image/') || (attachment.contentType.startsWith('video/') && attachment.size <= 15 * 1024 * 1024)) {
-                        const fileUrl = attachment.url;
-                        const uniqueFileName = uuidv4() + path.extname(attachment.name);
-                        const filePath = path.join(__dirname, `../uploads/${i.user.id}`, uniqueFileName);
-
-                        try {
-                            // Check if the user already exists in the database
-                            const userDB = await User.findOne({ userDiscordId: interaction.user.id });
-                            if (!userDB) {
-                                await message.reply(language.getLocalizedString(lang, 'userNotFound'));
-                                return;
-                            }
-
-                            // Create and save the photo document
-                            const photo = new Photo({
-                                name: uniqueFileName,
-                                userDiscordId: interaction.user.id,
-                                user: userDB._id,
-                            });
-
-                            // Ensure the directory exists
-                            await ensureDirectoryExists(path.join(__dirname, `../uploads/${i.user.id}`));
-
-                            // Download and save the file
-                            const response = await axios({
-                                url: fileUrl,
-                                method: 'GET',
-                                responseType: 'stream',
-                            });
-
-                            response.data.pipe(fs.createWriteStream(filePath));
-                            response.data.on('end', async () => {
-                                uploadedFiles++;
-                                if (uploadedFiles > 3) {
-                                    messageCollector.stop();
-                                    await i.followUp(language.getLocalizedString(lang, 'maxFilesUploaded'));
-                                }else{
-                                await photo.save();
-                                userDB.photos.push(photo._id);
-                                await userDB.save();
-
-                                log("i",`Saved attachment: ${filePath}`);
-                                }
-                            });
-
-                            response.data.on('error', (err) => {
-                                log("e",'Error downloading the file:', err);
-                                message.reply(language.getLocalizedString(lang, 'fileSaveError'));
-                            });
-                        } catch (error) {
-                            log("e",'Error fetching the file:', error);
-                            await message.reply(language.getLocalizedString(lang, 'fileUploadError'));
-                        }
-                    } else {
-                        await message.reply(language.getLocalizedString(lang, 'fileRequirementsError'));
-                    }
-                }
-            });
-
-            messageCollector.on('end', (collected) => {
-                if (collected.size === 0) {
-                    i.followUp(language.getLocalizedString(lang, 'fileUploadTimeout'));
-                }
-            });
-        } else if (i.customId === 'ancet_photos_cancel') {
-            await i.deferUpdate();
-            await i.editReply({ content: language.getLocalizedString(lang, 'fileUploadCancelled'), embeds: [], components: [] });
-        }
     });
 }
 
@@ -523,11 +413,142 @@ async function ancetFillDescriptionData(interaction) {
         } else {
             log("i",'User not found');
         }
+        return PROFILE(interaction)
     } catch (error) {
         log("e", error);
     }
 }
+const activeCollectors = new Map();
 
+async function ancetPhotos(i) {
+    const lang = i.locale; // Changed from interaction.locale to i.locale
 
+    if (i.customId === 'ancet_photos_upload') {
+        // If there's an existing collector for this user, stop it
+        if (activeCollectors.has(i.user.id)) {
+            const existingCollector = activeCollectors.get(i.user.id);
+            existingCollector.stop();
+        }
 
-module.exports = { ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData, containsForbiddenWords };
+        await i.deferUpdate();
+        const uploadEmbed = new EmbedBuilder()
+            .setColor(0x000000)
+            .setTitle(language.getLocalizedString(lang, 'uploadPhotosVideosTitle'))
+            .setDescription(language.getLocalizedString(lang, 'uploadPhotosVideosDescription'));
+
+        await i.message.edit({ embeds: [uploadEmbed], components: [] });
+
+        const messageFilter = (m) => m.author.id === i.user.id && m.attachments.size > 0;
+        const messageCollector = i.channel.createMessageCollector({ filter: messageFilter, time: 180000 });
+
+        // Track the collector for this user
+        activeCollectors.set(i.user.id, messageCollector);
+
+        let uploadedFiles = 0;
+
+        // Clear the user's photos array
+        const userDB = await User.findOne({ userDiscordId: i.user.id });
+        if (userDB) {
+            await Promise.all(userDB.photos.map(async (photoId) => {
+                const photoDB = await Photo.findById(photoId);
+                if (photoDB) {
+                    photoDB.activ = false;
+                    await photoDB.save();
+                }
+            }));
+            userDB.photos = [];
+            await userDB.save();
+        }
+
+        messageCollector.on('collect', async (message) => {
+            const attachments = message.attachments;
+
+            if (uploadedFiles > 3) {
+                await message.reply(language.getLocalizedString(lang, 'maxFilesUploaded'));
+                return;
+            }
+
+            for (const attachment of attachments.values()) {
+                if (uploadedFiles > 3) break;
+
+                if (attachment.contentType.startsWith('image/') || (attachment.contentType.startsWith('video/') && attachment.size <= 15 * 1024 * 1024)) {
+                    const fileUrl = attachment.url;
+                    const uniqueFileName = uuidv4() + path.extname(attachment.name);
+                    const filePath = path.join(__dirname, `../uploads/${i.user.id}`, uniqueFileName);
+
+                    try {
+                        // Check if the user already exists in the database
+                        const userDB = await User.findOne({ userDiscordId: i.user.id });
+                        if (!userDB) {
+                            await message.reply(language.getLocalizedString(lang, 'userNotFound'));
+                            return;
+                        }
+
+                        // Create and save the photo document
+                        const photo = new Photo({
+                            name: uniqueFileName,
+                            userDiscordId: i.user.id,
+                            user: userDB._id,
+                        });
+
+                        // Ensure the directory exists
+                        await ensureDirectoryExists(path.join(__dirname, `../uploads/${i.user.id}`));
+
+                        // Download and save the file
+                        const response = await axios({
+                            url: fileUrl,
+                            method: 'GET',
+                            responseType: 'stream',
+                        });
+
+                        response.data.pipe(fs.createWriteStream(filePath));
+                        response.data.on('end', async () => {
+                            uploadedFiles++;
+                            if (uploadedFiles > 3) {
+                                messageCollector.stop();
+                                await i.followUp(language.getLocalizedString(lang, 'maxFilesUploaded'));
+                            } else {
+                                await photo.save();
+                                userDB.photos.push(photo._id);
+                                await userDB.save();
+
+                                log("i", `Saved attachment: ${filePath}`);
+                                
+                            }
+                        });
+
+                        response.data.on('error', (err) => {
+                            log("e", 'Error downloading the file:', err);
+                            message.reply(language.getLocalizedString(lang, 'fileSaveError'));
+                        });
+                    } catch (error) {
+                        log("e", 'Error fetching the file:', error);
+                        await message.reply(language.getLocalizedString(lang, 'fileUploadError'));
+                    }
+                } else {
+                    await message.reply(language.getLocalizedString(lang, 'fileRequirementsError'));
+                }
+            }
+            await message.delete();
+            await PROFILE(i)
+        });
+
+        messageCollector.on('end', (collected) => {
+            activeCollectors.delete(i.user.id);
+            if (collected.size === 0) {
+                i.followUp(language.getLocalizedString(lang, 'fileUploadTimeout'));
+            }
+        });
+    } else if (i.customId === 'ancet_photos_cancel') {
+        await i.deferUpdate();
+        // If there's an active collector for this user, stop it
+        if (activeCollectors.has(i.user.id)) {
+            const existingCollector = activeCollectors.get(i.user.id);
+            existingCollector.stop();
+            activeCollectors.delete(i.user.id);
+        }
+        await PROFILE(i)
+    }
+}
+
+module.exports = { ancetFillModal, ancetFillGender, ancetFillPhotos, ancetFillDescription, ancetFillDescriptionData, containsForbiddenWords, ancetPhotos };
