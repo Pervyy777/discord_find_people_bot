@@ -30,7 +30,7 @@ async function ancetLookLike(interaction) {
             log("w",'Current user not found for Discord ID:', interaction.user.id);
         }
 
-        if (existingUserProfile && UserDB && existingUserUserDB && UserDB.likesDayCount <= 0) {
+        if (existingUserProfile && UserDB && existingUserUserDB) {
             if (!existingUserProfile.ratedUsers.includes(UserDB._id)) {
                 
             let message
