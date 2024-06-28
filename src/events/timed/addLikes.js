@@ -8,7 +8,7 @@ module.exports = async function () {
 
         for (const userDB of usersDB) {
             userDB.likesTodayCount = userDB.likesDayCount
-            await userDb.save()
+            await userDB.save()
         }
     } catch (error) {
         log("e",'Error updating likes count:', error);
