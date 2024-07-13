@@ -27,7 +27,7 @@
   "nameLabel": "Enter your name",
   "ageLabel": "Enter your age",
   "cityLabel": "Enter your city",
-  "descriptionLabel": "Tell us about yourself",
+  "descriptionLabel": "Tell about yourself",
   "contentNotAllowed": "Your text contains prohibited content.",
   "allFieldsRequired": "All fields are required.",
   "invalidAge": "Please enter a valid age.",

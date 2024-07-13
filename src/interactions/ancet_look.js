@@ -164,7 +164,7 @@ async function ancetLookReport(interaction) {
 // Add components to modal
 const reason = new TextInputBuilder()
     .setCustomId('reason')
-    .setLabel(language.getLocalizedString(lang, 'reportReasonLabels'))
+    .setLabel(language.getLocalizedString(lang, 'reportReasonLabel'))
     .setStyle(TextInputStyle.Short)
     .setRequired(true);
 
